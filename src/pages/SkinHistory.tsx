@@ -51,7 +51,10 @@ export default function SkinHistory() {
     setLoading(false);
   };
 
-  useEffect(() => { loadReports(); }, []);
+  useEffect(() => {
+    const timer = window.setTimeout(() => { void loadReports(); }, 0);
+    return () => window.clearTimeout(timer);
+  }, []);
 
   const handleDelete = async (id: string | number) => {
     if (!window.confirm("Delete this skin scan report?")) return;

@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { analyzeSkinFromFrame } from "../utils/skinEngine";
+import { analyzeSkinFromFrame, validateImageQuality } from "../utils/skinEngine";
 import { generateRecommendations } from "../utils/skinRecommendations";
 import { useSkin } from "../context/SkinContext";
 import { saveSkinReport, skinResultToReport } from "../services/skinReportService";
@@ -66,6 +66,10 @@ export default function SkinScan() {
   const [currentStep, setCurrentStep] = useState(0);
   const [progress, setProgress] = useState(0);
 
+  // Quality check states
+  const [qualityResult, setQualityResult] = useState<ReturnType<typeof validateImageQuality> | null>(null);
+  const [bypassValidation, setBypassValidation] = useState(false);
+
   // Form inputs
   const [age, setAge] = useState("");
   const [sleepHours, setSleepHours] = useState("");
@@ -100,6 +104,26 @@ export default function SkinScan() {
     enableCamera();
     return () => { if (stream) stream.getTracks().forEach((t) => t.stop()); };
   }, []);
+
+  // Real-time quality validation check loop
+  useEffect(() => {
+    if (!cameraActive || scanning || scanComplete) return;
+    const interval = setInterval(() => {
+      const video = videoRef.current;
+      const canvas = canvasRef.current;
+      if (video && canvas && video.videoWidth > 0) {
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        const ctx = canvas.getContext("2d");
+        if (ctx) {
+          ctx.drawImage(video, 0, 0);
+          const q = validateImageQuality(canvas);
+          setQualityResult(q);
+        }
+      }
+    }, 450);
+    return () => clearInterval(interval);
+  }, [cameraActive, scanning, scanComplete]);
 
   const startScan = async () => {
     if (scanning) return;
@@ -249,6 +273,42 @@ export default function SkinScan() {
               )}
             </div>
 
+            {/* Real-time Quality Indicators */}
+            {cameraActive && !scanning && !scanComplete && (
+              <div className="mt-4 p-4 rounded-2xl bg-white/5 border border-white/10 grid grid-cols-3 gap-2 text-center text-xs">
+                <div>
+                  <p className="text-white/40 mb-1">💡 Lighting</p>
+                  {!qualityResult ? (
+                    <span className="text-white/60">⏳ Checking...</span>
+                  ) : qualityResult.lighting.passed ? (
+                    <span className="text-emerald-400 font-semibold">🟢 Good</span>
+                  ) : (
+                    <span className="text-amber-400 font-semibold">⚠️ {qualityResult.lighting.status}</span>
+                  )}
+                </div>
+                <div>
+                  <p className="text-white/40 mb-1">🔍 Sharpness</p>
+                  {!qualityResult ? (
+                    <span className="text-white/60">⏳ Checking...</span>
+                  ) : qualityResult.blur.passed ? (
+                    <span className="text-emerald-400 font-semibold">🟢 Sharp</span>
+                  ) : (
+                    <span className="text-red-400 font-semibold">🔴 Blurry</span>
+                  )}
+                </div>
+                <div>
+                  <p className="text-white/40 mb-1">👤 Alignment</p>
+                  {!qualityResult ? (
+                    <span className="text-white/60">⏳ Checking...</span>
+                  ) : qualityResult.faceCentering.passed ? (
+                    <span className="text-emerald-400 font-semibold">🟢 Centered</span>
+                  ) : (
+                    <span className="text-amber-400 font-semibold">⚠️ Align Face</span>
+                  )}
+                </div>
+              </div>
+            )}
+
             {/* Scan step indicators */}
             <div className="mt-4 flex justify-between">
               {SCAN_STEPS.map((s, i) => (
@@ -288,12 +348,13 @@ export default function SkinScan() {
                 >
                   <option value="none" className="bg-slate-800">No specific concern</option>
                   <option value="acne" className="bg-slate-800">Acne & Breakouts</option>
+                  <option value="blackheads" className="bg-slate-800">Blackheads / Whiteheads</option>
                   <option value="oily" className="bg-slate-800">Oily / Shiny Skin</option>
                   <option value="dry" className="bg-slate-800">Dry / Flaky Skin</option>
+                  <option value="combination" className="bg-slate-800">Combination Skin</option>
                   <option value="sensitive" className="bg-slate-800">Sensitive / Redness</option>
                   <option value="darkCircles" className="bg-slate-800">Dark Circles</option>
                   <option value="pigmentation" className="bg-slate-800">Dark Spots / Pigmentation</option>
-                  <option value="aging" className="bg-slate-800">Ageing / Fine Lines</option>
                 </select>
               </div>
 
@@ -341,7 +402,7 @@ export default function SkinScan() {
 
             <button
               onClick={startScan}
-              disabled={scanning}
+              disabled={scanning || (!qualityResult?.isValid && !bypassValidation && cameraActive)}
               className="mt-6 w-full py-4 rounded-2xl font-bold text-white text-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
               style={{
                 background: scanning ? "rgba(236,72,153,0.3)" : "linear-gradient(135deg, #ec4899, #8b5cf6)",
@@ -357,6 +418,18 @@ export default function SkinScan() {
                 "✨ Start AI Skin Analysis"
               )}
             </button>
+
+            {!qualityResult?.isValid && cameraActive && !scanning && !scanComplete && (
+              <div className="mt-3 text-center">
+                <p className="text-white/50 text-xs mb-1.5">⚠️ For accurate results, satisfy all checks on the left.</p>
+                <button
+                  onClick={() => setBypassValidation(true)}
+                  className="text-pink-400 hover:text-pink-300 text-xs font-semibold underline transition"
+                >
+                  Bypass validation checks and scan anyway
+                </button>
+              </div>
+            )}
 
             {scanComplete && (
               <div className="mt-4 flex gap-3">
