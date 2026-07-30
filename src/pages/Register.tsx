@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { signUp } from "../services/authService";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 
 type FirebaseError = { code?: string; message?: string };
 
@@ -10,6 +10,7 @@ function getFirebaseError(error: unknown): FirebaseError {
 
 export default function Register() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -22,7 +23,7 @@ export default function Register() {
     try {
       await signUp(email, password);
       alert("Registration Successful! Check your email for a verification link.");
-      navigate("/login");
+      navigate("/login", { replace: true, state: location.state });
     } catch (error: unknown) {
       const err = getFirebaseError(error);
       if (err?.code === "auth/email-already-in-use") {
@@ -80,7 +81,7 @@ export default function Register() {
 
         <p className="text-center mt-6 text-gray-600 text-sm">
           Already have an account?{" "}
-          <Link to="/login" className="text-blue-600 font-semibold hover:underline">
+          <Link to="/login" state={location.state} className="text-blue-600 font-semibold hover:underline">
             Login
           </Link>
         </p>

@@ -4,6 +4,7 @@ import { BrowserRouter } from "react-router-dom";
 import App from "./App";
 import { HealthProvider } from "./context/HealthContext";
 import { AuthProvider } from "./context/AuthContext";
+import { SkinProvider } from "./context/SkinContext";
 import "./index.css";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
@@ -11,7 +12,9 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
     <BrowserRouter>
       <AuthProvider>
         <HealthProvider>
-          <App />
+          <SkinProvider>
+            <App />
+          </SkinProvider>
         </HealthProvider>
       </AuthProvider>
     </BrowserRouter>

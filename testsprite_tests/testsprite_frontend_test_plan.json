@@ -1,0 +1,1011 @@
+[
+  {
+    "id": "TC001",
+    "title": "Sign in with valid credentials and enter the dashboard",
+    "description": "An authenticated user can sign in with email and password and reach the dashboard experience.",
+    "category": "User Registration and Login",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the authenticated dashboard is displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify core dashboard content is visible"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC002",
+    "title": "Create an account and reach the sign-in flow",
+    "description": "A new visitor can register with valid credentials and see confirmation that the account was created so they can proceed to sign in.",
+    "category": "User Registration and Login",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /register"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the registration form"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify an account creation confirmation is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the sign-in flow is available"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC003",
+    "title": "View current health summary on the dashboard",
+    "description": "A signed-in user can open the dashboard and see the core health metrics, score, and risk summary populated from scan data.",
+    "category": "Health Metric Display and Score Calculation",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the dashboard link"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify health cards are displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify a health score and risk summary are displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC004",
+    "title": "Block access when email verification is required",
+    "description": "An unverified user who signs in is shown that verification is required before continuing into the app.",
+    "category": "Email Verification Enforcement",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify a verification required message is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the authenticated dashboard is not displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC005",
+    "title": "Complete a scan and save the latest report",
+    "description": "An authenticated user can submit scan inputs, complete a live scan, and save the resulting report for later viewing.",
+    "category": "Report Saving and Latest Report Viewing",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the scan link"
+      },
+      {
+        "type": "action",
+        "description": "Fill in a valid age into the age field"
+      },
+      {
+        "type": "action",
+        "description": "Fill in a valid number of sleep hours into the sleep hours field"
+      },
+      {
+        "type": "action",
+        "description": "Fill in a valid stress level into the stress level field"
+      },
+      {
+        "type": "action",
+        "description": "Allow camera access"
+      },
+      {
+        "type": "action",
+        "description": "Start the scan"
+      },
+      {
+        "type": "action",
+        "description": "Save the report"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify live health metrics are displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the scan results are saved as the latest report"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC006",
+    "title": "Complete a live health scan with valid inputs",
+    "description": "An authenticated user can grant camera access, enter required scan inputs, start a scan, and see live health metrics populate.",
+    "category": "AI Health Scan via Camera",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the scan section link"
+      },
+      {
+        "type": "action",
+        "description": "Allow camera access"
+      },
+      {
+        "type": "action",
+        "description": "Fill in a valid age into the age field"
+      },
+      {
+        "type": "action",
+        "description": "Fill in valid sleep hours into the sleep hours field"
+      },
+      {
+        "type": "action",
+        "description": "Fill in a valid stress level into the stress level field"
+      },
+      {
+        "type": "action",
+        "description": "Start the scan"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify live health metrics begin to populate"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify a health score is displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC007",
+    "title": "Review detailed scan results in the latest report",
+    "description": "A signed-in user can open the latest report and review the detailed scan metrics and score breakdown.",
+    "category": "Health Metric Display and Score Calculation",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the report link"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the latest health report is displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify detailed metric values and a health score breakdown are displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC008",
+    "title": "Open the latest saved report after a scan",
+    "description": "A signed-in user can navigate from a completed scan to the report page and see the most recent saved report.",
+    "category": "Report Saving and Latest Report Viewing",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the scan link"
+      },
+      {
+        "type": "action",
+        "description": "Fill in a valid age into the age field"
+      },
+      {
+        "type": "action",
+        "description": "Fill in a valid number of sleep hours into the sleep hours field"
+      },
+      {
+        "type": "action",
+        "description": "Fill in a valid stress level into the stress level field"
+      },
+      {
+        "type": "action",
+        "description": "Allow camera access"
+      },
+      {
+        "type": "action",
+        "description": "Start the scan"
+      },
+      {
+        "type": "action",
+        "description": "Save the report"
+      },
+      {
+        "type": "action",
+        "description": "Click the report link"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the latest saved health report is displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the report shows the values from the completed scan"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC009",
+    "title": "Save a completed scan and open the latest report",
+    "description": "After a scan is completed, the user can open the report view and see the latest saved report details.",
+    "category": "AI Health Scan via Camera",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the scan section link"
+      },
+      {
+        "type": "action",
+        "description": "Allow camera access"
+      },
+      {
+        "type": "action",
+        "description": "Fill in a valid age into the age field"
+      },
+      {
+        "type": "action",
+        "description": "Fill in valid sleep hours into the sleep hours field"
+      },
+      {
+        "type": "action",
+        "description": "Fill in a valid stress level into the stress level field"
+      },
+      {
+        "type": "action",
+        "description": "Start the scan"
+      },
+      {
+        "type": "action",
+        "description": "Open the report section"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the latest report is displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify detailed health results are visible"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC010",
+    "title": "See charts on the dashboard",
+    "description": "A signed-in user can open the dashboard and view the health charts used to compare scan metrics.",
+    "category": "Charts and Visualizations",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the dashboard link"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify health charts are displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify summary visuals for metric trends are displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC011",
+    "title": "Stop a scan and return to the camera state",
+    "description": "An authenticated user can stop an active scan and see the scan return to an idle camera state.",
+    "category": "AI Health Scan via Camera",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the scan section link"
+      },
+      {
+        "type": "action",
+        "description": "Allow camera access"
+      },
+      {
+        "type": "action",
+        "description": "Fill in a valid age into the age field"
+      },
+      {
+        "type": "action",
+        "description": "Fill in valid sleep hours into the sleep hours field"
+      },
+      {
+        "type": "action",
+        "description": "Fill in a valid stress level into the stress level field"
+      },
+      {
+        "type": "action",
+        "description": "Start the scan"
+      },
+      {
+        "type": "action",
+        "description": "Stop the scan"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the scan returns to an idle camera state"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify live metrics stop updating"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC012",
+    "title": "View a past report from history",
+    "description": "A signed-in user can open history and review a previously saved health report from the list of records.",
+    "category": "Report Saving and Latest Report Viewing",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the history link"
+      },
+      {
+        "type": "action",
+        "description": "Open a past health report"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the selected historical report is displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the report details are readable"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC013",
+    "title": "Browse saved report history",
+    "description": "This test verifies that a user can open the history page, see previously saved reports, and open a past record for review.",
+    "category": "Report History",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /history"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify saved reports are displayed"
+      },
+      {
+        "type": "action",
+        "description": "Click a past report to open its details"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the selected report details are displayed"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC014",
+    "title": "Browse report history and open a past record",
+    "description": "An authenticated user can open the history page, review saved reports, and open an older record from the list.",
+    "category": "Report History",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the history section link"
+      },
+      {
+        "type": "action",
+        "description": "Open a past report from the history list"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify a saved report detail view is displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the historical record content is visible"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC015",
+    "title": "Navigate between authenticated sections",
+    "description": "This test verifies that an authenticated user can move between the dashboard, report, and history sections using the site navigation.",
+    "category": "Site Navigation",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /dashboard"
+      },
+      {
+        "type": "action",
+        "description": "Click the navigation link to open the report page"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the report page is displayed"
+      },
+      {
+        "type": "action",
+        "description": "Click the navigation link to open the history page"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the history page is displayed"
+      },
+      {
+        "type": "action",
+        "description": "Click the navigation link to return to the dashboard"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the dashboard is displayed"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC016",
+    "title": "Browse the public home and about pages before signing in",
+    "description": "A guest visitor can explore the public site pages and then reach the authenticated experience after logging in.",
+    "category": "Charts and Visualizations",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /"
+      },
+      {
+        "type": "action",
+        "description": "Click the about link"
+      },
+      {
+        "type": "action",
+        "description": "Click the login link"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the authenticated experience is displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify public navigation is available"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC017",
+    "title": "Export the latest report as PDF",
+    "description": "This test verifies that a user can open the latest report and export it as a PDF file from the report page.",
+    "category": "PDF Export of Reports",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /report"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the latest report is displayed"
+      },
+      {
+        "type": "action",
+        "description": "Export the report as PDF"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify a PDF export confirmation is displayed"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC018",
+    "title": "Export a report as PDF from the report view",
+    "description": "An authenticated user can open the report page and export the current report as a PDF through the UI.",
+    "category": "PDF Export",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Open the report section"
+      },
+      {
+        "type": "action",
+        "description": "Export the report as PDF"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify a report export confirmation is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the report remains displayed"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC019",
+    "title": "Prevent scan start when required inputs are incomplete",
+    "description": "A user leaving required scan inputs incomplete sees validation feedback and cannot begin the scan.",
+    "category": "AI Health Scan via Camera",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the scan section link"
+      },
+      {
+        "type": "action",
+        "description": "Allow camera access"
+      },
+      {
+        "type": "action",
+        "description": "Leave the required scan inputs incomplete"
+      },
+      {
+        "type": "action",
+        "description": "Start the scan"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify validation feedback for the scan form is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify live health metrics do not begin to populate"
+      }
+    ],
+    "priority": "Low"
+  },
+  {
+    "id": "TC020",
+    "title": "View empty report history state",
+    "description": "This test verifies that the history page shows an empty state when no saved reports exist.",
+    "category": "Report History",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /history"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify an empty state message is displayed"
+      }
+    ],
+    "priority": "Low"
+  },
+  {
+    "id": "TC021",
+    "title": "Handle empty dashboard health data gracefully",
+    "description": "A signed-in user with no scan data can open the dashboard and see an empty or missing-data state instead of broken health cards.",
+    "category": "Health Metric Display and Score Calculation",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the dashboard link"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify an empty state or missing-data message is displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify health cards are not shown with stale values"
+      }
+    ],
+    "priority": "Low"
+  },
+  {
+    "id": "TC022",
+    "title": "Show validation for invalid sign-in credentials",
+    "description": "A user entering invalid login credentials sees a validation message and does not enter the authenticated app.",
+    "category": "User Registration and Login",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with invalid@example.com"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with invalid-password"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify an authentication validation message is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the authenticated dashboard is not displayed"
+      }
+    ],
+    "priority": "Low"
+  },
+  {
+    "id": "TC023",
+    "title": "Show an empty history state when no reports exist",
+    "description": "A user with no saved reports sees an empty history state instead of a report list.",
+    "category": "Report History",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the history section link"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify an empty state message is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify no saved reports are listed"
+      }
+    ],
+    "priority": "Low"
+  },
+  {
+    "id": "TC024",
+    "title": "Navigate between public pages",
+    "description": "This test verifies that a guest visitor can move between the home, about, login, and register pages using the site navigation.",
+    "category": "Site Navigation",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /"
+      },
+      {
+        "type": "action",
+        "description": "Click the navigation link to open the about page"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the about page is displayed"
+      },
+      {
+        "type": "action",
+        "description": "Click the navigation link to return to the home page"
+      },
+      {
+        "type": "action",
+        "description": "Click the navigation link to open the login page"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the login page is displayed"
+      },
+      {
+        "type": "action",
+        "description": "Click the navigation link to open the register page"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the register page is displayed"
+      }
+    ],
+    "priority": "Low"
+  },
+  {
+    "id": "TC025",
+    "title": "Explore public pages before signing in",
+    "description": "A guest visitor can move between the public home and about pages and then reach the login page.",
+    "category": "Site Navigation",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /"
+      },
+      {
+        "type": "action",
+        "description": "Click the about page link"
+      },
+      {
+        "type": "action",
+        "description": "Click the login page link"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the about page is displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the login page is displayed"
+      }
+    ],
+    "priority": "Low"
+  }
+]

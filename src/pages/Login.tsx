@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { signIn, signInWithGoogle, sendVerificationEmail, signOut } from "../services/authService";
 import { FcGoogle } from "react-icons/fc";
 import { HiOutlineMailOpen } from "react-icons/hi";
@@ -13,6 +13,7 @@ function getFirebaseError(error: unknown): FirebaseError {
 
 export default function Login() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -20,6 +21,14 @@ export default function Login() {
   const [unverifiedEmail, setUnverifiedEmail] = useState<string | null>(null);
   const [resendStatus, setResendStatus] = useState("");
   const [unverifiedUserObj, setUnverifiedUserObj] = useState<User | null>(null);
+
+  const redirectAfterLogin = () => {
+    const from = location.state?.from;
+    const destination = typeof from?.pathname === "string" && from.pathname.startsWith("/")
+      ? `${from.pathname}${from.search ?? ""}${from.hash ?? ""}`
+      : "/skin-dashboard";
+    navigate(destination, { replace: true });
+  };
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -40,7 +49,7 @@ export default function Login() {
         return;
       }
 
-      navigate("/dashboard");
+      redirectAfterLogin();
     } catch (error: unknown) {
       const err = getFirebaseError(error);
       if (err?.code === "auth/invalid-credential") {
@@ -64,15 +73,21 @@ export default function Login() {
     setLoading(true);
     try {
       await signInWithGoogle();
-      navigate("/dashboard");
+      redirectAfterLogin();
     } catch (error: unknown) {
       const err = getFirebaseError(error);
       if (err?.code === "auth/popup-closed-by-user") {
         setError("Google sign-in was cancelled.");
       } else if (err?.code === "auth/operation-not-allowed") {
         setError("Google sign-in is not enabled in Firebase Console.");
+      } else if (err?.code === "auth/unauthorized-domain") {
+        setError("This website domain is not authorised for Google sign-in in Firebase.");
+      } else if (err?.code === "auth/popup-blocked") {
+        setError("Your browser blocked the Google sign-in popup. Allow popups and try again.");
+      } else if (err?.code === "auth/invalid-api-key") {
+        setError("The Firebase web API key is invalid. Check the VITE_FIREBASE values in .env.");
       } else {
-        setError("Failed to sign in with Google. Please try again.");
+        setError(`Google sign-in failed: ${err?.code || err?.message || "unknown error"}`);
       }
     } finally {
       setLoading(false);
@@ -197,6 +212,7 @@ export default function Login() {
         <div className="text-center mt-6">
           <Link
             to="/register"
+            state={location.state}
             className="text-blue-600 font-semibold hover:underline"
           >
             Create New Account
