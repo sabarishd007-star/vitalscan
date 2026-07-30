@@ -26,3 +26,10 @@ dist-ssr
 *.sw?
 
 testsprite_tests\tmp\config.json
+
+node_modules/
+node_modules - Copy/
+output/
+tmp/
+testsprite_tests/tmp/
+*.pdf
