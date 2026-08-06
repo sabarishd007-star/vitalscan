@@ -1,3 +1,4 @@
+import json
 import os
 import torch
 import torch.nn as nn
@@ -30,11 +31,12 @@ class SkinAnalysisModel(nn.Module):
 
 
 class SkinModelLoader:
-    def __init__(self, model_path: str = "weights/skin_model.pth"):
+    def __init__(self, model_path: str = "weights/skin_model.pth", calibration_path: str = None):
         self.model_path = model_path
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.model = None
         self.is_mock = True
+        self.calibration = None
         
         # Define standard input transforms
         self.transform = transforms.Compose([
@@ -44,6 +46,9 @@ class SkinModelLoader:
         ])
         
         self.load_model()
+        if calibration_path is None:
+            calibration_path = os.path.join(os.path.dirname(self.model_path), "calibration.json")
+        self.load_calibration(calibration_path)
         
     def load_model(self):
         if os.path.exists(self.model_path):
@@ -77,23 +82,18 @@ class SkinModelLoader:
 
     def _predict_ml(self, image: Image.Image, user_params: dict) -> dict:
         try:
-            # Prepare image tensor
-            img_tensor = self.transform(image.convert("RGB")).unsqueeze(0).to(self.device)
-            
-            with torch.no_grad():
-                outputs = self.model(img_tensor)
-                # Sigmoid to normalize outputs to [0, 1] range
-                scores = torch.sigmoid(outputs).squeeze(0).cpu().numpy()
+            # Raw sigmoid probabilities, optionally re-scaled by calibration.json
+            probs = self.predict_probabilities(image)
 
             results = {}
             for idx, concern in enumerate(CONCERNS):
-                # Scale model logits/sigmoid output to [0, 10] range
-                val = float(scores[idx]) * 10.0
+                # Scale probabilities to [0, 10] range
+                val = float(probs[idx]) * 10.0
                 results[concern] = round(val, 1)
 
             # Deterministic confidence from the model's own margin: how far each
             # predicted probability is from the ambiguous 0.5 boundary.
-            certainty = float(np.mean(np.maximum(scores, 1.0 - scores))) * 100.0
+            certainty = float(np.mean(np.maximum(probs, 1.0 - probs))) * 100.0
             confidence = int(max(50, min(95, certainty)))
 
             # Apply user parameter bias to output
@@ -103,6 +103,52 @@ class SkinModelLoader:
         except Exception as e:
             print(f"ML inference exception: {e}. Falling back to heuristic prediction.")
             return self._predict_heuristic(image, user_params)
+
+    def predict_logits(self, image: Image.Image) -> np.ndarray:
+        """Raw logits for the 20 concerns (uncalibrated), shape (20,)."""
+        if self.is_mock or self.model is None:
+            return np.zeros(len(CONCERNS))
+        img_tensor = self.transform(image.convert("RGB")).unsqueeze(0).to(self.device)
+        with torch.no_grad():
+            return self.model(img_tensor).squeeze(0).cpu().numpy()
+
+    def predict_probabilities(self, image: Image.Image) -> np.ndarray:
+        """Sigmoid probabilities in [0, 1], with calibration.json applied if present."""
+        logits = self.predict_logits(image)
+        probs = 1.0 / (1.0 + np.exp(-logits))
+        if self.calibration is not None:
+            probs = self._apply_calibration(logits, probs)
+        return probs
+
+    def load_calibration(self, path: str):
+        """Load per-condition Platt scaling coefficients from calibration.json."""
+        if not path or not os.path.exists(path):
+            return
+        try:
+            with open(path, "r", encoding="utf-8") as fh:
+                data = json.load(fh)
+            conditions = data.get("conditions")
+            if not isinstance(conditions, dict):
+                return
+            self.calibration = conditions
+            print(f"Loaded calibration from {path}")
+        except Exception as e:
+            print(f"Error loading calibration {path}: {e}")
+            self.calibration = None
+
+    def _apply_calibration(self, logits: np.ndarray, probs: np.ndarray) -> np.ndarray:
+        """Map each logit through p = sigmoid(a * z + b) using fitted coefficients."""
+        calibrated = np.zeros(len(CONCERNS), dtype=float)
+        for idx, concern in enumerate(CONCERNS):
+            params = self.calibration.get(concern)
+            if not params:
+                calibrated[idx] = probs[idx]
+                continue
+            a = float(params.get("a", 1.0))
+            b = float(params.get("b", 0.0))
+            p = 1.0 / (1.0 + np.exp(-(a * float(logits[idx]) + b)))
+            calibrated[idx] = float(np.clip(p, 1e-6, 1.0 - 1e-6))
+        return calibrated
 
     def _predict_heuristic(self, image: Image.Image, user_params: dict) -> dict:
         """

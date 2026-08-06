@@ -1,0 +1,25 @@
+{
+  "_comment": "Gate for production rollout (MODEL_VALIDATED). max_mae is on the 0-10 scale; min_auc is AUROC for severity > 5/10. Leave a metric out to skip it for that condition. Tune values with eval.py until real labeled data passes before setting MODEL_VALIDATED=true.",
+  "conditions": {
+    "acneLevel":     { "max_mae": 1.5, "min_auc": 0.75 },
+    "darkCircles":   { "max_mae": 1.5, "min_auc": 0.75 },
+    "oiliness":      { "max_mae": 1.5, "min_auc": 0.75 },
+    "dryness":       { "max_mae": 1.5, "min_auc": 0.75 },
+    "redness":       { "max_mae": 1.5, "min_auc": 0.75 },
+    "poreVisibility":{ "max_mae": 1.5, "min_auc": 0.70 },
+    "pigmentation":  { "max_mae": 1.5, "min_auc": 0.70 },
+    "texture":       { "max_mae": 1.5, "min_auc": 0.70 },
+    "glowScore":     { "max_mae": 1.5 },
+    "hydration":     { "max_mae": 1.5 },
+    "blackheads":    { "max_mae": 1.5, "min_auc": 0.70 },
+    "melasma":       { "max_mae": 1.5, "min_auc": 0.70 },
+    "tanning":       { "max_mae": 1.5, "min_auc": 0.70 },
+    "dullness":      { "max_mae": 1.5, "min_auc": 0.70 },
+    "acneScars":     { "max_mae": 1.5, "min_auc": 0.70 },
+    "aging":         { "max_mae": 1.5, "min_auc": 0.70 },
+    "puffiness":     { "max_mae": 1.5, "min_auc": 0.70 },
+    "dehydration":   { "max_mae": 1.5 },
+    "milia":         { "max_mae": 1.5, "min_auc": 0.70 },
+    "sunburn":       { "max_mae": 1.5, "min_auc": 0.75 }
+  }
+}
