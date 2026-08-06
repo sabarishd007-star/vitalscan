@@ -1,0 +1,849 @@
+{
+  "generated_at": "2026-08-06T21:23:04",
+  "weights_path": "weights/skin_model.pth",
+  "weights_sha256": "42a6bac26c28ab0e187ef92180f176938248debb2ef633fe9cd8d7b6609941eb",
+  "calibration": null,
+  "model_loaded": true,
+  "num_images": 150,
+  "seconds": 4.0,
+  "overall": {
+    "mean_mae": 0.58,
+    "mean_auc": 0.9751
+  },
+  "conditions": {
+    "acneLevel": {
+      "mae": 0.6946,
+      "auc": 0.9829
+    },
+    "darkCircles": {
+      "mae": 0.5988,
+      "auc": 0.9966
+    },
+    "oiliness": {
+      "mae": 0.435,
+      "auc": 0.9754
+    },
+    "dryness": {
+      "mae": 0.4412,
+      "auc": 0.9607
+    },
+    "redness": {
+      "mae": 0.4781,
+      "auc": 0.992
+    },
+    "poreVisibility": {
+      "mae": 0.6065,
+      "auc": 0.988
+    },
+    "pigmentation": {
+      "mae": 0.5872,
+      "auc": 0.9842
+    },
+    "texture": {
+      "mae": 0.5833,
+      "auc": 0.9777
+    },
+    "glowScore": {
+      "mae": 0.5509,
+      "auc": 0.9807
+    },
+    "hydration": {
+      "mae": 0.4162,
+      "auc": 0.9618
+    },
+    "blackheads": {
+      "mae": 0.691,
+      "auc": 0.9932
+    },
+    "melasma": {
+      "mae": 0.4201,
+      "auc": 0.9854
+    },
+    "tanning": {
+      "mae": 0.502,
+      "auc": 0.9884
+    },
+    "dullness": {
+      "mae": 0.5348,
+      "auc": 0.9877
+    },
+    "acneScars": {
+      "mae": 0.5976,
+      "auc": 0.9918
+    },
+    "aging": {
+      "mae": 0.5992,
+      "auc": 0.8857
+    },
+    "puffiness": {
+      "mae": 1.5983,
+      "auc": 0.9329
+    },
+    "dehydration": {
+      "mae": 0.4342,
+      "auc": 0.978
+    },
+    "milia": {
+      "mae": 0.2918,
+      "auc": null
+    },
+    "sunburn": {
+      "mae": 0.539,
+      "auc": 0.983
+    }
+  },
+  "by_skin_tone": {
+    "1": {
+      "conditions": {
+        "acneLevel": {
+          "mae": 0.6443,
+          "auc": 1.0
+        },
+        "darkCircles": {
+          "mae": 0.5509,
+          "auc": null
+        },
+        "oiliness": {
+          "mae": 0.5914,
+          "auc": null
+        },
+        "dryness": {
+          "mae": 0.5955,
+          "auc": 0.8444
+        },
+        "redness": {
+          "mae": 0.3614,
+          "auc": 0.9583
+        },
+        "poreVisibility": {
+          "mae": 0.4327,
+          "auc": null
+        },
+        "pigmentation": {
+          "mae": 0.5781,
+          "auc": 1.0
+        },
+        "texture": {
+          "mae": 0.3723,
+          "auc": null
+        },
+        "glowScore": {
+          "mae": 0.6768,
+          "auc": 0.9111
+        },
+        "hydration": {
+          "mae": 0.5447,
+          "auc": 0.8667
+        },
+        "blackheads": {
+          "mae": 0.6084,
+          "auc": null
+        },
+        "melasma": {
+          "mae": 0.3882,
+          "auc": 0.95
+        },
+        "tanning": {
+          "mae": 0.5571,
+          "auc": 0.9583
+        },
+        "dullness": {
+          "mae": 0.6387,
+          "auc": 0.9778
+        },
+        "acneScars": {
+          "mae": 0.4984,
+          "auc": 1.0
+        },
+        "aging": {
+          "mae": 0.816,
+          "auc": 0.7755
+        },
+        "puffiness": {
+          "mae": 0.7814,
+          "auc": 1.0
+        },
+        "dehydration": {
+          "mae": 0.555,
+          "auc": 0.9
+        },
+        "milia": {
+          "mae": 0.249,
+          "auc": null
+        },
+        "sunburn": {
+          "mae": 0.4864,
+          "auc": 0.9556
+        }
+      },
+      "overall": {
+        "mean_mae": 0.5463,
+        "mean_auc": 0.9356
+      }
+    },
+    "2": {
+      "conditions": {
+        "acneLevel": {
+          "mae": 0.561,
+          "auc": 0.9875
+        },
+        "darkCircles": {
+          "mae": 0.72,
+          "auc": 1.0
+        },
+        "oiliness": {
+          "mae": 0.4218,
+          "auc": 0.9924
+        },
+        "dryness": {
+          "mae": 0.4063,
+          "auc": 0.9226
+        },
+        "redness": {
+          "mae": 0.5255,
+          "auc": 0.9968
+        },
+        "poreVisibility": {
+          "mae": 0.5344,
+          "auc": null
+        },
+        "pigmentation": {
+          "mae": 0.4549,
+          "auc": 1.0
+        },
+        "texture": {
+          "mae": 0.5161,
+          "auc": null
+        },
+        "glowScore": {
+          "mae": 0.5833,
+          "auc": 0.9625
+        },
+        "hydration": {
+          "mae": 0.3963,
+          "auc": 0.9435
+        },
+        "blackheads": {
+          "mae": 0.6465,
+          "auc": null
+        },
+        "melasma": {
+          "mae": 0.3565,
+          "auc": 1.0
+        },
+        "tanning": {
+          "mae": 0.4828,
+          "auc": 1.0
+        },
+        "dullness": {
+          "mae": 0.5702,
+          "auc": 0.9516
+        },
+        "acneScars": {
+          "mae": 0.4702,
+          "auc": 0.9957
+        },
+        "aging": {
+          "mae": 0.5489,
+          "auc": 0.9226
+        },
+        "puffiness": {
+          "mae": 1.1126,
+          "auc": 0.9624
+        },
+        "dehydration": {
+          "mae": 0.4214,
+          "auc": 0.9741
+        },
+        "milia": {
+          "mae": 0.2439,
+          "auc": null
+        },
+        "sunburn": {
+          "mae": 0.5059,
+          "auc": 0.9673
+        }
+      },
+      "overall": {
+        "mean_mae": 0.5239,
+        "mean_auc": 0.9737
+      }
+    },
+    "3": {
+      "conditions": {
+        "acneLevel": {
+          "mae": 0.8987,
+          "auc": 0.9688
+        },
+        "darkCircles": {
+          "mae": 0.6175,
+          "auc": null
+        },
+        "oiliness": {
+          "mae": 0.4399,
+          "auc": 0.9611
+        },
+        "dryness": {
+          "mae": 0.4153,
+          "auc": 0.9907
+        },
+        "redness": {
+          "mae": 0.4435,
+          "auc": 1.0
+        },
+        "poreVisibility": {
+          "mae": 0.5713,
+          "auc": 1.0
+        },
+        "pigmentation": {
+          "mae": 0.7158,
+          "auc": 0.9778
+        },
+        "texture": {
+          "mae": 0.5616,
+          "auc": 1.0
+        },
+        "glowScore": {
+          "mae": 0.487,
+          "auc": 0.9853
+        },
+        "hydration": {
+          "mae": 0.4332,
+          "auc": 0.9969
+        },
+        "blackheads": {
+          "mae": 0.6853,
+          "auc": null
+        },
+        "melasma": {
+          "mae": 0.5069,
+          "auc": 0.9722
+        },
+        "tanning": {
+          "mae": 0.531,
+          "auc": 1.0
+        },
+        "dullness": {
+          "mae": 0.4948,
+          "auc": 1.0
+        },
+        "acneScars": {
+          "mae": 0.7233,
+          "auc": 0.974
+        },
+        "aging": {
+          "mae": 0.5053,
+          "auc": 0.9448
+        },
+        "puffiness": {
+          "mae": 1.729,
+          "auc": 0.9236
+        },
+        "dehydration": {
+          "mae": 0.4146,
+          "auc": 0.9968
+        },
+        "milia": {
+          "mae": 0.2931,
+          "auc": null
+        },
+        "sunburn": {
+          "mae": 0.5709,
+          "auc": 0.9905
+        }
+      },
+      "overall": {
+        "mean_mae": 0.6019,
+        "mean_auc": 0.9813
+      }
+    },
+    "4": {
+      "conditions": {
+        "acneLevel": {
+          "mae": 0.509,
+          "auc": 1.0
+        },
+        "darkCircles": {
+          "mae": 0.5035,
+          "auc": 1.0
+        },
+        "oiliness": {
+          "mae": 0.2808,
+          "auc": 0.9889
+        },
+        "dryness": {
+          "mae": 0.3523,
+          "auc": 0.9621
+        },
+        "redness": {
+          "mae": 0.3913,
+          "auc": 1.0
+        },
+        "poreVisibility": {
+          "mae": 0.6729,
+          "auc": 1.0
+        },
+        "pigmentation": {
+          "mae": 0.5022,
+          "auc": 0.9868
+        },
+        "texture": {
+          "mae": 0.6725,
+          "auc": 1.0
+        },
+        "glowScore": {
+          "mae": 0.5501,
+          "auc": 1.0
+        },
+        "hydration": {
+          "mae": 0.2801,
+          "auc": 0.9773
+        },
+        "blackheads": {
+          "mae": 0.6781,
+          "auc": null
+        },
+        "melasma": {
+          "mae": 0.3159,
+          "auc": 1.0
+        },
+        "tanning": {
+          "mae": 0.5454,
+          "auc": 0.9375
+        },
+        "dullness": {
+          "mae": 0.5015,
+          "auc": 1.0
+        },
+        "acneScars": {
+          "mae": 0.5433,
+          "auc": 1.0
+        },
+        "aging": {
+          "mae": 0.8179,
+          "auc": 0.7679
+        },
+        "puffiness": {
+          "mae": 1.8332,
+          "auc": 0.8636
+        },
+        "dehydration": {
+          "mae": 0.3345,
+          "auc": 0.9848
+        },
+        "milia": {
+          "mae": 0.3175,
+          "auc": null
+        },
+        "sunburn": {
+          "mae": 0.4766,
+          "auc": 1.0
+        }
+      },
+      "overall": {
+        "mean_mae": 0.5539,
+        "mean_auc": 0.9705
+      }
+    },
+    "5": {
+      "conditions": {
+        "acneLevel": {
+          "mae": 0.8201,
+          "auc": 0.9712
+        },
+        "darkCircles": {
+          "mae": 0.5372,
+          "auc": 1.0
+        },
+        "oiliness": {
+          "mae": 0.4426,
+          "auc": 0.9938
+        },
+        "dryness": {
+          "mae": 0.4682,
+          "auc": 0.9809
+        },
+        "redness": {
+          "mae": 0.5183,
+          "auc": 0.995
+        },
+        "poreVisibility": {
+          "mae": 0.6758,
+          "auc": 1.0
+        },
+        "pigmentation": {
+          "mae": 0.7264,
+          "auc": 1.0
+        },
+        "texture": {
+          "mae": 0.6177,
+          "auc": 1.0
+        },
+        "glowScore": {
+          "mae": 0.5046,
+          "auc": null
+        },
+        "hydration": {
+          "mae": 0.4471,
+          "auc": 0.9809
+        },
+        "blackheads": {
+          "mae": 0.7529,
+          "auc": null
+        },
+        "melasma": {
+          "mae": 0.5447,
+          "auc": 0.9904
+        },
+        "tanning": {
+          "mae": 0.4136,
+          "auc": 1.0
+        },
+        "dullness": {
+          "mae": 0.4638,
+          "auc": null
+        },
+        "acneScars": {
+          "mae": 0.6955,
+          "auc": 1.0
+        },
+        "aging": {
+          "mae": 0.5882,
+          "auc": 0.8542
+        },
+        "puffiness": {
+          "mae": 2.0513,
+          "auc": 0.9043
+        },
+        "dehydration": {
+          "mae": 0.4461,
+          "auc": 0.99
+        },
+        "milia": {
+          "mae": 0.3205,
+          "auc": null
+        },
+        "sunburn": {
+          "mae": 0.5321,
+          "auc": 1.0
+        }
+      },
+      "overall": {
+        "mean_mae": 0.6283,
+        "mean_auc": 0.9788
+      }
+    },
+    "6": {
+      "conditions": {
+        "acneLevel": {
+          "mae": 0.5756,
+          "auc": 1.0
+        },
+        "darkCircles": {
+          "mae": 0.5549,
+          "auc": null
+        },
+        "oiliness": {
+          "mae": 0.5792,
+          "auc": 0.8889
+        },
+        "dryness": {
+          "mae": 0.5715,
+          "auc": 1.0
+        },
+        "redness": {
+          "mae": 0.6696,
+          "auc": 0.9375
+        },
+        "poreVisibility": {
+          "mae": 0.8822,
+          "auc": 1.0
+        },
+        "pigmentation": {
+          "mae": 0.4046,
+          "auc": null
+        },
+        "texture": {
+          "mae": 0.8965,
+          "auc": 1.0
+        },
+        "glowScore": {
+          "mae": 0.6249,
+          "auc": null
+        },
+        "hydration": {
+          "mae": 0.4683,
+          "auc": 1.0
+        },
+        "blackheads": {
+          "mae": 0.8354,
+          "auc": 1.0
+        },
+        "melasma": {
+          "mae": 0.2542,
+          "auc": 1.0
+        },
+        "tanning": {
+          "mae": 0.5569,
+          "auc": null
+        },
+        "dullness": {
+          "mae": 0.6921,
+          "auc": null
+        },
+        "acneScars": {
+          "mae": 0.5873,
+          "auc": 1.0
+        },
+        "aging": {
+          "mae": 0.3495,
+          "auc": 0.6667
+        },
+        "puffiness": {
+          "mae": 2.1688,
+          "auc": 0.8889
+        },
+        "dehydration": {
+          "mae": 0.5765,
+          "auc": 1.0
+        },
+        "milia": {
+          "mae": 0.3788,
+          "auc": null
+        },
+        "sunburn": {
+          "mae": 0.7839,
+          "auc": 0.9375
+        }
+      },
+      "overall": {
+        "mean_mae": 0.6705,
+        "mean_auc": 0.9514
+      }
+    }
+  },
+  "thresholds": {
+    "met": false,
+    "report": [
+      {
+        "condition": "acneLevel",
+        "mae": 0.6946,
+        "auc": 0.9829,
+        "thresholds": {
+          "max_mae": 1.5,
+          "min_auc": 0.75
+        },
+        "status": "PASS",
+        "reasons": []
+      },
+      {
+        "condition": "darkCircles",
+        "mae": 0.5988,
+        "auc": 0.9966,
+        "thresholds": {
+          "max_mae": 1.5,
+          "min_auc": 0.75
+        },
+        "status": "PASS",
+        "reasons": []
+      },
+      {
+        "condition": "oiliness",
+        "mae": 0.435,
+        "auc": 0.9754,
+        "thresholds": {
+          "max_mae": 1.5,
+          "min_auc": 0.75
+        },
+        "status": "PASS",
+        "reasons": []
+      },
+      {
+        "condition": "dryness",
+        "mae": 0.4412,
+        "auc": 0.9607,
+        "thresholds": {
+          "max_mae": 1.5,
+          "min_auc": 0.75
+        },
+        "status": "PASS",
+        "reasons": []
+      },
+      {
+        "condition": "redness",
+        "mae": 0.4781,
+        "auc": 0.992,
+        "thresholds": {
+          "max_mae": 1.5,
+          "min_auc": 0.75
+        },
+        "status": "PASS",
+        "reasons": []
+      },
+      {
+        "condition": "poreVisibility",
+        "mae": 0.6065,
+        "auc": 0.988,
+        "thresholds": {
+          "max_mae": 1.5,
+          "min_auc": 0.7
+        },
+        "status": "PASS",
+        "reasons": []
+      },
+      {
+        "condition": "pigmentation",
+        "mae": 0.5872,
+        "auc": 0.9842,
+        "thresholds": {
+          "max_mae": 1.5,
+          "min_auc": 0.7
+        },
+        "status": "PASS",
+        "reasons": []
+      },
+      {
+        "condition": "texture",
+        "mae": 0.5833,
+        "auc": 0.9777,
+        "thresholds": {
+          "max_mae": 1.5,
+          "min_auc": 0.7
+        },
+        "status": "PASS",
+        "reasons": []
+      },
+      {
+        "condition": "glowScore",
+        "mae": 0.5509,
+        "auc": 0.9807,
+        "thresholds": {
+          "max_mae": 1.5
+        },
+        "status": "PASS",
+        "reasons": []
+      },
+      {
+        "condition": "hydration",
+        "mae": 0.4162,
+        "auc": 0.9618,
+        "thresholds": {
+          "max_mae": 1.5
+        },
+        "status": "PASS",
+        "reasons": []
+      },
+      {
+        "condition": "blackheads",
+        "mae": 0.691,
+        "auc": 0.9932,
+        "thresholds": {
+          "max_mae": 1.5,
+          "min_auc": 0.7
+        },
+        "status": "PASS",
+        "reasons": []
+      },
+      {
+        "condition": "melasma",
+        "mae": 0.4201,
+        "auc": 0.9854,
+        "thresholds": {
+          "max_mae": 1.5,
+          "min_auc": 0.7
+        },
+        "status": "PASS",
+        "reasons": []
+      },
+      {
+        "condition": "tanning",
+        "mae": 0.502,
+        "auc": 0.9884,
+        "thresholds": {
+          "max_mae": 1.5,
+          "min_auc": 0.7
+        },
+        "status": "PASS",
+        "reasons": []
+      },
+      {
+        "condition": "dullness",
+        "mae": 0.5348,
+        "auc": 0.9877,
+        "thresholds": {
+          "max_mae": 1.5,
+          "min_auc": 0.7
+        },
+        "status": "PASS",
+        "reasons": []
+      },
+      {
+        "condition": "acneScars",
+        "mae": 0.5976,
+        "auc": 0.9918,
+        "thresholds": {
+          "max_mae": 1.5,
+          "min_auc": 0.7
+        },
+        "status": "PASS",
+        "reasons": []
+      },
+      {
+        "condition": "aging",
+        "mae": 0.5992,
+        "auc": 0.8857,
+        "thresholds": {
+          "max_mae": 1.5,
+          "min_auc": 0.7
+        },
+        "status": "PASS",
+        "reasons": []
+      },
+      {
+        "condition": "puffiness",
+        "mae": 1.5983,
+        "auc": 0.9329,
+        "thresholds": {
+          "max_mae": 1.5,
+          "min_auc": 0.7
+        },
+        "status": "FAIL",
+        "reasons": [
+          "mae 1.5983 > 1.5"
+        ]
+      },
+      {
+        "condition": "dehydration",
+        "mae": 0.4342,
+        "auc": 0.978,
+        "thresholds": {
+          "max_mae": 1.5
+        },
+        "status": "PASS",
+        "reasons": []
+      },
+      {
+        "condition": "milia",
+        "mae": 0.2918,
+        "auc": null,
+        "thresholds": {
+          "max_mae": 1.5,
+          "min_auc": 0.7
+        },
+        "status": "PASS",
+        "reasons": []
+      },
+      {
+        "condition": "sunburn",
+        "mae": 0.539,
+        "auc": 0.983,
+        "thresholds": {
+          "max_mae": 1.5,
+          "min_auc": 0.75
+        },
+        "status": "PASS",
+        "reasons": []
+      }
+    ]
+  }
+}

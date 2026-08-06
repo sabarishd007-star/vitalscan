@@ -1,0 +1,4 @@
+# Regenerable synthetic distillation datasets (see generate_synthetic_dataset.py)
+dist_dataset/
+dist_eval/
+dist_eval2/

@@ -24,47 +24,49 @@ labels.csv format (values are 0.0 to 1.0, representing severity / 10):
     img_002.jpg,0.1,0.5,0.4,0.8,...
 
 ────────────────────────────────────────────────────────────────────────────
-PUBLIC DATASETS YOU CAN USE
-────────────────────────────────────────────────────────────────────────────
-1. ISIC Archive (skin lesion images) — https://www.isic-archive.com
-2. ACNE04 Dataset — https://github.com/xpwu95/LDL
-3. FFHQ (high-quality face images) — https://github.com/NVlabs/ffhq-dataset
-
-────────────────────────────────────────────────────────────────────────────
 USAGE
 ────────────────────────────────────────────────────────────────────────────
     python train.py --dataset ./dataset --epochs 30 --batch_size 16
-
-────────────────────────────────────────────────────────────────────────────
 """
 
 import os
+import csv
 import argparse
+import random
+
+from PIL import Image
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import Dataset, DataLoader, random_split
 from torchvision import transforms
-from PIL import Image
-import pandas as pd
-import numpy as np
+
 from model import SkinAnalysisModel, CONCERNS
+
+
+def set_seed(seed: int) -> None:
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
 
 
 # ─── Dataset ─────────────────────────────────────────────────────────────────
 
 class SkinDataset(Dataset):
     def __init__(self, csv_path: str, images_dir: str, transform=None):
-        self.data = pd.read_csv(csv_path)
+        with open(csv_path, "r", encoding="utf-8", newline="") as fh:
+            reader = csv.DictReader(fh)
+            self.rows = [dict(row) for row in reader]
         self.images_dir = images_dir
         self.transform = transform
-        print(f"Loaded {len(self.data)} samples from {csv_path}")
+        print(f"Loaded {len(self.rows)} samples from {csv_path}")
 
     def __len__(self):
-        return len(self.data)
+        return len(self.rows)
 
     def __getitem__(self, idx):
-        row = self.data.iloc[idx]
+        row = self.rows[idx]
         img_path = os.path.join(self.images_dir, row["filename"])
         image = Image.open(img_path).convert("RGB")
 
@@ -73,83 +75,97 @@ class SkinDataset(Dataset):
 
         # Labels are 0.0–1.0 (severity / 10)
         labels = torch.tensor(
-            [row[concern] for concern in CONCERNS],
-            dtype=torch.float32
+            [float(row[concern]) for concern in CONCERNS],
+            dtype=torch.float32,
         )
         return image, labels
 
 
 # ─── Training Loop ────────────────────────────────────────────────────────────
 
+def build_transform(train: bool):
+    if train:
+        return transforms.Compose([
+            transforms.Resize((224, 224)),
+            transforms.RandomHorizontalFlip(),
+            transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.15),
+            transforms.RandomRotation(8),
+            transforms.ToTensor(),
+            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+        ])
+    return transforms.Compose([
+        transforms.Resize((224, 224)),
+        transforms.ToTensor(),
+        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+    ])
+
+
+def load_backbone(model: nn.Module, use_pretrained: bool) -> bool:
+    """Copy ImageNet weights into the backbone; returns True if loaded."""
+    if not use_pretrained:
+        print("Backbone initialised from scratch (--no-pretrained).")
+        return False
+    from torchvision import models
+    try:
+        pretrained = models.mobilenet_v2(weights=models.MobileNet_V2_Weights.IMAGENET1K_V1)
+    except Exception as exc:  # noqa: BLE001 - offline / download failure
+        print(f"ImageNet weights unavailable ({exc}); using random init.")
+        return False
+    model.backbone.features.load_state_dict(pretrained.features.state_dict())
+    print("Loaded pretrained ImageNet weights for backbone.")
+    return True
+
+
 def train(args):
+    set_seed(args.seed)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Using device: {device}")
 
-    # Transforms
-    train_transform = transforms.Compose([
-        transforms.Resize((224, 224)),
-        transforms.RandomHorizontalFlip(),
-        transforms.ColorJitter(brightness=0.3, contrast=0.3, saturation=0.2),
-        transforms.RandomRotation(10),
-        transforms.ToTensor(),
-        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-    ])
-    val_transform = transforms.Compose([
-        transforms.Resize((224, 224)),
-        transforms.ToTensor(),
-        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-    ])
-
-    # Dataset
     csv_path = os.path.join(args.dataset, "labels.csv")
     images_dir = os.path.join(args.dataset, "images")
     full_dataset = SkinDataset(csv_path, images_dir)
+    if len(full_dataset) == 0:
+        raise SystemExit(f"No samples found in {csv_path}")
 
-    # Train/val split (80/20)
-    val_size = int(len(full_dataset) * 0.2)
+    val_size = max(1, int(len(full_dataset) * 0.2))
     train_size = len(full_dataset) - val_size
-    train_dataset, val_dataset = random_split(full_dataset, [train_size, val_size])
+    train_dataset, val_dataset = random_split(
+        full_dataset, [train_size, val_size],
+        generator=torch.Generator().manual_seed(args.seed),
+    )
+    train_dataset.dataset.transform = build_transform(train=True)
+    val_dataset.dataset.transform = build_transform(train=False)
 
-    train_dataset.dataset.transform = train_transform
-    val_dataset.dataset.transform = val_transform
+    # num_workers=0 is required on Windows (multiprocessing inside DataLoader
+    # would re-run the module under a fresh interpreter).
+    train_loader = DataLoader(train_dataset, batch_size=args.batch_size,
+                              shuffle=True, num_workers=0, drop_last=True)
+    val_loader = DataLoader(val_dataset, batch_size=args.batch_size,
+                            shuffle=False, num_workers=0)
 
-    train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True, num_workers=2)
-    val_loader = DataLoader(val_dataset, batch_size=args.batch_size, shuffle=False, num_workers=2)
-
-    # Model
     model = SkinAnalysisModel(num_classes=len(CONCERNS)).to(device)
-    
-    # Load pretrained ImageNet backbone for transfer learning
-    from torchvision import models
-    pretrained = models.mobilenet_v2(weights=models.MobileNet_V2_Weights.IMAGENET1K_V1)
-    # Copy backbone weights (excluding final classifier)
-    model.backbone.features.load_state_dict(pretrained.features.state_dict())
-    print("Loaded pretrained ImageNet weights for backbone.")
+    load_backbone(model, use_pretrained=not args.no_pretrained)
 
-    # Loss & Optimizer
-    # MSE for regression (predicting 0–1 severity from sigmoid output)
     criterion = nn.MSELoss()
     optimizer = optim.AdamW(model.parameters(), lr=args.lr, weight_decay=1e-4)
     scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=args.epochs)
 
-    os.makedirs("weights", exist_ok=True)
+    os.makedirs(args.output_dir, exist_ok=True)
     best_val_loss = float("inf")
 
     for epoch in range(1, args.epochs + 1):
-        # ─── Train ───
         model.train()
         train_loss = 0.0
         for images, labels in train_loader:
             images, labels = images.to(device), labels.to(device)
             optimizer.zero_grad()
-            outputs = torch.sigmoid(model(images))   # normalize to [0, 1]
+            outputs = torch.sigmoid(model(images))
             loss = criterion(outputs, labels)
             loss.backward()
             optimizer.step()
             train_loss += loss.item() * images.size(0)
         train_loss /= len(train_loader.dataset)
 
-        # ─── Validate ───
         model.eval()
         val_loss = 0.0
         with torch.no_grad():
@@ -163,14 +179,13 @@ def train(args):
         scheduler.step()
         print(f"Epoch [{epoch:3d}/{args.epochs}]  Train Loss: {train_loss:.4f}  Val Loss: {val_loss:.4f}")
 
-        # Save best model
         if val_loss < best_val_loss:
             best_val_loss = val_loss
-            torch.save(model.state_dict(), "weights/skin_model.pth")
-            print(f"  ✅ Saved best model (val_loss={val_loss:.4f}) → weights/skin_model.pth")
+            torch.save(model.state_dict(), os.path.join(args.output_dir, "skin_model.pth"))
+            print(f"  -> Saved best model (val_loss={val_loss:.4f})")
 
     print(f"\nTraining complete. Best validation loss: {best_val_loss:.4f}")
-    print("Weights saved to: weights/skin_model.pth")
+    print(f"Weights saved to: {os.path.join(args.output_dir, 'skin_model.pth')}")
     print("Restart uvicorn to load the new weights automatically.")
 
 
@@ -182,5 +197,9 @@ if __name__ == "__main__":
     parser.add_argument("--epochs",     type=int,   default=30,          help="Number of training epochs")
     parser.add_argument("--batch_size", type=int,   default=16,          help="Training batch size")
     parser.add_argument("--lr",         type=float, default=1e-4,        help="Initial learning rate")
+    parser.add_argument("--output-dir", type=str,   default="weights",   help="Where to save skin_model.pth")
+    parser.add_argument("--seed",       type=int,   default=42,          help="RNG seed for reproducibility")
+    parser.add_argument("--no-pretrained", action="store_true",
+                        help="Skip the ImageNet backbone (requires no download)")
     args = parser.parse_args()
     train(args)

@@ -52,6 +52,20 @@ def _std_channel(channel: np.ndarray, mask: np.ndarray) -> float:
     return float(std[0][0])
 
 
+def _clamp_min_max(val: float, min_in: float = 0.0, max_in: float = 100.0) -> float:
+    """
+    Min-max normalizes a raw signal metric (e.g., Laplacian variance or HSV density)
+    into a [0.0, 10.0] severity score with strict clamping to prevent raw noise
+    from automatically hitting 10.0.
+    """
+    if val <= min_in:
+        return 0.0
+    if val >= max_in:
+        return 10.0
+    scaled = ((val - min_in) / (max_in - min_in)) * 10.0
+    return round(float(np.clip(scaled, 0.0, 10.0)), 1)
+
+
 # ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
@@ -110,16 +124,14 @@ def compute_all_conditions(
     red2      = cv2.inRange(img_hsv, (170, 60, 60), (180, 255, 255))
     red_mask  = cv2.bitwise_or(red1, red2)
     acne_mask = cv2.bitwise_and(red_mask, mask_face)
-    acne_score = min(10.0, round(
-        (cv2.countNonZero(acne_mask) / _safe_nonzero(mask_face)) * 180.0, 1
-    ))
+    acne_density = (cv2.countNonZero(acne_mask) / _safe_nonzero(mask_face)) * 100.0
+    acne_score = _clamp_min_max(acne_density, 0.0, 6.0)
 
     # ------------------------------------------------------------------
     # 2. Blackheads / Whiteheads  — Laplacian variance on nose T-zone
     # ------------------------------------------------------------------
-    blackheads_score = min(10.0, round(
-        _laplacian_var(img_gray, mask_nose) / 90.0, 1
-    ))
+    lap_var_nose = _laplacian_var(img_gray, mask_nose)
+    blackheads_score = _clamp_min_max(lap_var_nose, 20.0, 450.0)
 
     # ------------------------------------------------------------------
     # 3. Oily / Shiny Skin  — bright-highlight ratio on forehead
@@ -129,12 +141,12 @@ def compute_all_conditions(
         float(np.sum(forehead_pixels > 215) / max(1, len(forehead_pixels)))
         if len(forehead_pixels) > 0 else 0.0
     )
-    oily_score = min(10.0, round(glare_ratio * 120.0, 1))
+    oily_score = _clamp_min_max(glare_ratio * 100.0, 0.0, 10.0)
 
     # ------------------------------------------------------------------
     # 4. Dry / Flaky Skin  — inverse of oiliness with floor
     # ------------------------------------------------------------------
-    dry_score = round(max(0.5, 8.5 - oily_score), 1)
+    dry_score = round(max(0.5, min(10.0, 8.5 - oily_score)), 1)
 
     # ------------------------------------------------------------------
     # 5. Combination Skin  — derived label, returned as a score flag
@@ -153,14 +165,14 @@ def compute_all_conditions(
     # 6. Sensitive / Redness  — cheek a* (red-green) channel elevation
     # ------------------------------------------------------------------
     redness_val     = _mean_channel(a_chan, mask_cheeks)
-    sensitive_score = min(10.0, round(max(0.0, redness_val - 128.0) / 2.5, 1))
+    sensitive_score = _clamp_min_max(max(0.0, redness_val - 128.0), 0.0, 25.0)
 
     # ------------------------------------------------------------------
     # 7. Dark Circles  — L* difference between cheek and under-eye zones
     # ------------------------------------------------------------------
     eye_lum          = _mean_channel(l_chan, mask_eyes)
     cheek_lum        = _mean_channel(l_chan, mask_cheeks)
-    dark_circles_score = min(10.0, round(max(0.0, cheek_lum - eye_lum) / 2.2, 1))
+    dark_circles_score = _clamp_min_max(max(0.0, cheek_lum - eye_lum), 0.0, 22.0)
 
     # ------------------------------------------------------------------
     # 8 & 9. Dark Spots / Pigmentation + Melasma
@@ -168,59 +180,63 @@ def compute_all_conditions(
     # ------------------------------------------------------------------
     std_a = _std_channel(a_chan, mask_cheeks)
     std_b = _std_channel(b_chan, mask_cheeks)
-    pigmentation_score = min(10.0, round((std_a + std_b) / 2.5, 1))
-    melasma_score      = round(pigmentation_score * 0.75, 1)
+    pigmentation_score = _clamp_min_max(std_a + std_b, 4.0, 28.0)
+    melasma_score      = round(max(0.0, min(10.0, pigmentation_score * 0.75)), 1)
 
     # ------------------------------------------------------------------
     # 10. Tanning / Sun Damage  — overall L* depression across face zone
     # ------------------------------------------------------------------
     overall_l    = _mean_channel(l_chan, mask_face)
-    tanning_score = min(10.0, round(max(0.0, 160.0 - overall_l) / 6.0, 1))
+    tanning_score = _clamp_min_max(max(0.0, 160.0 - overall_l), 0.0, 60.0)
 
     # ------------------------------------------------------------------
     # 11 & 12. Enlarged Pores + Uneven Texture  — Laplacian variance on cheeks
     # ------------------------------------------------------------------
-    pores_score   = min(10.0, round(_laplacian_var(img_gray, mask_cheeks) / 110.0, 1))
+    lap_var_cheeks = _laplacian_var(img_gray, mask_cheeks)
+    pores_score   = _clamp_min_max(lap_var_cheeks, 25.0, 500.0)
     texture_score = pores_score   # same CV signal, reported separately
 
     # ------------------------------------------------------------------
     # 13. Dullness / Lack of Radiance  — low cheek luminance
     # ------------------------------------------------------------------
-    dullness_score = min(10.0, round(max(0.0, 170.0 - cheek_lum) / 8.0, 1))
+    dullness_score = _clamp_min_max(max(0.0, 170.0 - cheek_lum), 0.0, 80.0)
 
     # ------------------------------------------------------------------
     # 14. Acne Scars / Marks  — proportional proxy from acne score
     # ------------------------------------------------------------------
-    scars_score = round(acne_score * 0.8, 1)
+    scars_score = round(max(0.0, min(10.0, acne_score * 0.8)), 1)
 
     # ------------------------------------------------------------------
     # 15. Ageing / Fine Lines  — Canny edge density in crow's feet zone
     # ------------------------------------------------------------------
     edges = cv2.bitwise_and(cv2.Canny(img_gray, 50, 150), mask_crow_feet)
-    fine_lines_score = min(10.0, round(
-        (cv2.countNonZero(edges) / _safe_nonzero(mask_crow_feet)) * 70.0, 1
-    ))
+    edge_density = (cv2.countNonZero(edges) / _safe_nonzero(mask_crow_feet)) * 100.0
+    fine_lines_score = _clamp_min_max(edge_density, 0.0, 15.0)
 
     # ------------------------------------------------------------------
-    # 16. Under-eye Puffiness  — vertical Sobel gradient variance
+    # 16. Under-eye Puffiness  — vertical Sobel gradient variance,
+    #     measured INSIDE the under-eye bag region only (a whole-image
+    #     Sobel statistic would also respond to unrelated facial texture).
     # ------------------------------------------------------------------
-    sobel_var = float(cv2.Sobel(img_gray, cv2.CV_64F, 0, 1, ksize=3).var())
-    puffiness_score = min(10.0, round(sobel_var / 140.0, 1))
+    sobel = cv2.Sobel(img_gray, cv2.CV_64F, 0, 1, ksize=3)
+    bag_pixels = sobel[mask_eye_bags > 0]
+    sobel_var = float(bag_pixels.var()) if bag_pixels.size > 0 else 0.0
+    puffiness_score = _clamp_min_max(sobel_var, 30.0, 600.0)
 
     # ------------------------------------------------------------------
     # 17. Dehydration  — slightly amplified dryness signal
     # ------------------------------------------------------------------
-    dehydration_score = round(max(0.5, dry_score * 1.1), 1)
+    dehydration_score = round(max(0.5, min(10.0, dry_score * 1.1)), 1)
 
     # ------------------------------------------------------------------
     # 18. Milia  — fine cyst proxy from pore visibility
     # ------------------------------------------------------------------
-    milia_score = min(10.0, round(pores_score * 0.4, 1))
+    milia_score = round(max(0.0, min(10.0, pores_score * 0.4)), 1)
 
     # ------------------------------------------------------------------
     # 19. Sunburn / Irritation  — amplified redness
     # ------------------------------------------------------------------
-    sunburn_score = min(10.0, round(sensitive_score * 1.2, 1))
+    sunburn_score = round(max(0.0, min(10.0, sensitive_score * 1.2)), 1)
 
     return {
         "primary_skin_type": primary_skin_type,
