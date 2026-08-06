@@ -3,11 +3,12 @@ import { createContext, useContext, useState } from "react";
 import type { ReactNode } from "react";
 
 type HealthData = {
-  heartRate: number;
-  bloodPressure: string;
-  oxygen: number;
+  heartRate: number | null;
+  bloodPressure: string | null;
+  oxygen: number | null;
+  respirationRate: number | null;
   stress: string;
-  healthScore: number;
+  healthScore: number | null;
   risk: string;
 };
 
@@ -20,12 +21,13 @@ const HealthContext = createContext<HealthContextType | undefined>(undefined);
 
 export function HealthProvider({ children }: { children: ReactNode }) {
   const [healthData, setHealthData] = useState<HealthData>({
-    heartRate: 78,
-    bloodPressure: "120/80",
-    oxygen: 98,
-    stress: "Low",
-    healthScore: 92,
-    risk: "Low",
+    heartRate: null,
+    bloodPressure: null,
+    oxygen: null,
+    respirationRate: null,
+    stress: "Unknown",
+    healthScore: null,
+    risk: "Unknown",
   });
 
   return (

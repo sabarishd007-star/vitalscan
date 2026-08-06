@@ -5,29 +5,37 @@ import { useHealth } from "../context/HealthContext";
 export default function Report() {
   const { healthData } = useHealth();
   const recommendations =
-    healthData.risk === "Low"
+    healthData.risk === "Unknown"
       ? [
-          "Drink at least 2-3 liters of water daily.",
-          "Sleep 7-8 hours every night.",
-          "Exercise for 30 minutes daily.",
-          "Continue your healthy lifestyle.",
-          "Eat more fruits and vegetables.",
+          "Complete a camera scan to receive personalized recommendations.",
+          "Stay hydrated and sleep 7-8 hours nightly.",
+          "Exercise regularly and eat a balanced diet.",
+          "Track your wellness over time with regular scans.",
+          "Consult a clinician if you have health concerns.",
         ]
-      : healthData.risk === "Medium"
+      : healthData.risk === "Low"
         ? [
-            "Improve your sleep schedule.",
-            "Reduce stress with meditation.",
-            "Exercise at least 30 minutes daily.",
-            "Reduce junk food intake.",
-            "Monitor your health regularly.",
+            "Drink at least 2-3 liters of water daily.",
+            "Sleep 7-8 hours every night.",
+            "Exercise for 30 minutes daily.",
+            "Continue your healthy lifestyle.",
+            "Eat more fruits and vegetables.",
           ]
-        : [
-            "Consult a doctor for a complete health check.",
-            "Reduce stress immediately.",
-            "Improve sleep quality.",
-            "Maintain a healthy diet.",
-            "Schedule regular medical checkups.",
-          ];
+        : healthData.risk === "Moderate"
+          ? [
+              "Improve your sleep schedule.",
+              "Reduce stress with meditation.",
+              "Exercise at least 30 minutes daily.",
+              "Reduce junk food intake.",
+              "Monitor your health regularly.",
+            ]
+          : [
+              "Consult a doctor for a complete health check.",
+              "Reduce stress immediately.",
+              "Improve sleep quality.",
+              "Maintain a healthy diet.",
+              "Schedule regular medical checkups.",
+            ];
 
   const handleDownloadReport = () => {
     const pdf = new jsPDF();
@@ -55,11 +63,12 @@ export default function Report() {
     pdf.setFont("helvetica", "normal");
     pdf.setFontSize(12);
     const summary = [
-      `Health score: ${healthData.healthScore}%`,
+      `Health score: ${healthData.healthScore ?? "Not measured"}`,
       `Risk level: ${healthData.risk}`,
-      `Heart rate: ${healthData.heartRate} BPM`,
-      `Blood pressure: ${healthData.bloodPressure}`,
-      `Oxygen level: ${healthData.oxygen}%`,
+      `Heart rate: ${healthData.heartRate ? `${healthData.heartRate} BPM` : "Not measured"}`,
+      `Respiration: ${healthData.respirationRate ? `${healthData.respirationRate} bpm` : "Not measured"}`,
+      `Blood pressure: ${healthData.bloodPressure ?? "Not measured by camera"}`,
+      `Oxygen level: ${healthData.oxygen !== null ? `${healthData.oxygen}%` : "Not measured by camera"}`,
       `Stress level: ${healthData.stress}`,
     ];
     summary.forEach((item) => {
@@ -85,6 +94,8 @@ export default function Report() {
     pdf.setFontSize(9);
     pdf.setTextColor(107, 114, 128);
     pdf.text("This report is informational and is not a medical diagnosis.", margin, y);
+    y += 6;
+    pdf.text("Blood pressure and oxygen (SpO2) are not measured by camera scanning.", margin, y);
 
     const date = new Date().toISOString().slice(0, 10);
     pdf.save(`vitalscan-health-report-${date}.pdf`);
@@ -96,15 +107,16 @@ export default function Report() {
         <h1 className="text-4xl font-bold text-center text-blue-700 mb-8">AI Health Report</h1>
 
         <p className="mb-6 rounded-xl border border-amber-200 bg-amber-50 p-4 text-center text-sm text-amber-900">
-          This wellness prototype is not a medical device or diagnosis. Consult a qualified clinician for health concerns.
+          This wellness prototype is not a medical device or diagnosis. Consult a qualified clinician for health concerns. Blood pressure and oxygen (SpO2) are not measured by camera scanning and are marked as such.
         </p>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <MetricCard title="Health Score" value={`${healthData.healthScore}%`} color="bg-green-100" />
+          <MetricCard title="Health Score" value={healthData.healthScore !== null ? `${healthData.healthScore}%` : "Not measured"} color="bg-green-100" />
           <MetricCard title="Risk Level" value={healthData.risk} color="bg-yellow-100" />
-          <MetricCard title="Heart Rate" value={`${healthData.heartRate} BPM`} color="bg-red-100" />
-          <MetricCard title="Blood Pressure" value={healthData.bloodPressure} color="bg-blue-100" />
-          <MetricCard title="Oxygen Level" value={`${healthData.oxygen}%`} color="bg-green-100" />
+          <MetricCard title="Heart Rate" value={healthData.heartRate !== null ? `${healthData.heartRate} BPM` : "Not measured"} color="bg-red-100" />
+          <MetricCard title="Respiration" value={healthData.respirationRate !== null ? `${healthData.respirationRate} bpm` : "Not measured"} color="bg-purple-100" />
+          <MetricCard title="Blood Pressure" value={healthData.bloodPressure ?? "Not measured"} color="bg-blue-100" />
+          <MetricCard title="Oxygen Level" value={healthData.oxygen !== null ? `${healthData.oxygen}%` : "Not measured"} color="bg-green-100" />
           <MetricCard title="Stress Level" value={healthData.stress} color="bg-purple-100" />
         </div>
 

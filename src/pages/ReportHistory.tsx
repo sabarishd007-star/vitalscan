@@ -9,6 +9,8 @@ interface Report {
   bloodPressure?: string;
   oxygen_level?: number;
   oxygenLevel?: number;
+  respiration_rate?: number | null;
+  respirationRate?: number | null;
   stress_level?: string;
   stressLevel?: string;
   health_score?: number;
@@ -63,7 +65,11 @@ export default function ReportHistory() {
   };
 
   const getFieldValue = (report: Report, keyCamel: keyof Report, keySnake: keyof Report, fallback: string | number = "--"): string | number => {
-    return report[keySnake] !== undefined ? report[keySnake] : (report[keyCamel] !== undefined ? report[keyCamel] : fallback);
+    const snake = report[keySnake];
+    const camel = report[keyCamel];
+    if (snake !== undefined && snake !== null) return snake;
+    if (camel !== undefined && camel !== null) return camel;
+    return fallback;
   };
 
   const filteredReports = reports.filter((report) => {
@@ -98,6 +104,7 @@ export default function ReportHistory() {
             <tr>
               <th className="p-3">ID</th>
               <th>Heart Rate</th>
+              <th>Respiration</th>
               <th>BP</th>
               <th>Oxygen</th>
               <th>Stress</th>
@@ -110,8 +117,9 @@ export default function ReportHistory() {
           <tbody>
             {filteredReports.map((report) => {
               const hr = getFieldValue(report, "heartRate", "heart_rate");
-              const bp = getFieldValue(report, "bloodPressure", "blood_pressure");
-              const oxygen = getFieldValue(report, "oxygenLevel", "oxygen_level");
+              const respiration = getFieldValue(report, "respirationRate", "respiration_rate", "—");
+              const bp = getFieldValue(report, "bloodPressure", "blood_pressure", "—");
+              const oxygen = getFieldValue(report, "oxygenLevel", "oxygen_level", "—");
               const stress = getFieldValue(report, "stressLevel", "stress_level", "Low");
               const score = getFieldValue(report, "healthScore", "health_score");
               const risk = getFieldValue(report, "riskLevel", "risk_level");
@@ -119,11 +127,12 @@ export default function ReportHistory() {
               return (
                 <tr key={report.id} className="text-center border-b hover:bg-gray-100">
                   <td className="p-3 font-mono text-sm">{report.id}</td>
-                  <td>{hr} BPM</td>
+                  <td>{typeof hr === "number" ? `${hr} BPM` : hr}</td>
+                  <td>{typeof respiration === "number" ? `${respiration} bpm` : respiration}</td>
                   <td>{bp}</td>
-                  <td>{oxygen}%</td>
+                  <td>{typeof oxygen === "number" ? `${oxygen}%` : oxygen}</td>
                   <td>{stress}</td>
-                  <td>{score}%</td>
+                  <td>{typeof score === "number" ? `${score}%` : score}</td>
                   <td>{risk}</td>
                   <td>
                     <button
@@ -139,7 +148,7 @@ export default function ReportHistory() {
 
             {filteredReports.length === 0 && !loading && (
               <tr>
-                <td colSpan={8} className="text-center py-6 text-gray-500">
+                <td colSpan={9} className="text-center py-6 text-gray-500">
                   No reports found.
                 </td>
               </tr>
@@ -147,7 +156,7 @@ export default function ReportHistory() {
 
             {loading && (
               <tr>
-                <td colSpan={8} className="text-center py-6 text-blue-600 font-medium">
+                <td colSpan={9} className="text-center py-6 text-blue-600 font-medium">
                   Loading reports from Supabase...
                 </td>
               </tr>

@@ -1,18 +1,37 @@
 /**
  * Remote Photoplethysmography (rPPG) Engine
- * Analyzes micro-color variations in facial skin (Green channel spectrum 550nm)
- * to estimate Heart Rate (BPM), Heart Rate Variability (HRV), Stress, and Respiration.
+ * Analyzes micro-color variations in facial skin (Green channel ~550nm) to
+ * estimate Heart Rate (BPM), Heart Rate Variability (HRV), and Stress.
+ *
+ * Honesty contract:
+ *  - Heart rate / HRV / stress are derived from the captured pulse waveform.
+ *  - Respiration is NOT reported. Camera rPPG respiration (RSA-based) needs a
+ *    much longer, cleaner recording than a single short scan provides, and
+ *    naive estimators produce spurious values; we therefore always report
+ *    respiration as "not measured" rather than fabricate a number.
+ *  - Blood pressure and oxygen saturation (SpO2) are NOT measured by a camera.
+ *    These fields are always null and must be rendered as "Not measured".
+ *  - Output is fully deterministic: no random values are injected.
  */
+
+export type StressLevel = "Unknown" | "Low" | "Moderate" | "High";
 
 export interface RPPGResult {
   heartRate: number;
-  bloodPressure: string;
-  oxygenLevel: number;
-  stressLevel: string;
+  heartRateConfidence: "high" | "low";
+  stressLevel: StressLevel;
   healthScore: number;
   riskLevel: string;
-  respirationRate: number;
+  respirationRate: number | null;
+  bloodPressure: string | null;
+  oxygenLevel: number | null;
   signalBuffer: number[];
+}
+
+interface PulseEstimate {
+  bpm: number;
+  hrv: number;
+  peaks: number;
 }
 
 export class RPPGAnalyzer {
@@ -64,17 +83,23 @@ export class RPPGAnalyzer {
     }
 
     const avgGreen = count > 0 ? greenSum / count : 128;
-    const now = performance.now();
 
-    this.buffer.push(avgGreen);
+    this.pushSample(avgGreen, performance.now());
+    return avgGreen;
+  }
+
+  /**
+   * Record a raw signal sample (used for programmatic input / testing).
+   */
+  public pushSample(value: number, timestamp?: number): void {
+    const now = timestamp ?? performance.now();
+    this.buffer.push(value);
     this.timestamps.push(now);
 
     if (this.buffer.length > this.maxBufferSize) {
       this.buffer.shift();
       this.timestamps.shift();
     }
-
-    return avgGreen;
   }
 
   /**
@@ -82,7 +107,7 @@ export class RPPGAnalyzer {
    */
   public getNormalizedSignal(): number[] {
     if (this.buffer.length < 10) return [];
-    
+
     // Detrend and normalize buffer
     const mean = this.buffer.reduce((a, b) => a + b, 0) / this.buffer.length;
     const stdDev = Math.sqrt(
@@ -93,107 +118,109 @@ export class RPPGAnalyzer {
   }
 
   /**
-   * Compute final biometrics after scanning session
+   * Compute final biometrics after scanning session.
+   * Respiration, blood pressure, and SpO2 are always null: this camera-based
+   * scan cannot measure them.
    */
   public analyzeSession(): RPPGResult {
     const rawSignal = this.getNormalizedSignal();
-    
-    let bpm = 75; // Baseline fallback
-    let hrv = 45;
+    const pulse = this.estimatePulse(rawSignal);
 
-    if (rawSignal.length > 50) {
-      // Peak detection algorithm for Inter-Beat Interval (IBI)
-      const peaks: number[] = [];
-      const threshold = 0.3;
+    const heartRate = pulse ? pulse.bpm : 0;
+    const heartRateConfidence: "high" | "low" = pulse
+      ? pulse.peaks >= 3 ? "high" : "low"
+      : "low";
+    const hrv = pulse ? pulse.hrv : 0;
 
-      for (let i = 1; i < rawSignal.length - 1; i++) {
-        if (
-          rawSignal[i] > threshold &&
-          rawSignal[i] > rawSignal[i - 1] &&
-          rawSignal[i] > rawSignal[i + 1]
-        ) {
-          // Ensure minimum peak distance (~0.35s -> max 170 BPM)
-          if (peaks.length === 0 || (i - peaks[peaks.length - 1]) > 10) {
-            peaks.push(i);
-          }
-        }
-      }
-
-      if (peaks.length >= 2) {
-        // Estimate fps (~30fps)
-        const durationSec = (this.timestamps[this.timestamps.length - 1] - this.timestamps[0]) / 1000;
-        const fps = this.buffer.length / (durationSec || 1);
-
-        const ibis: number[] = [];
-        for (let i = 1; i < peaks.length; i++) {
-          const frameDiff = peaks[i] - peaks[i - 1];
-          const timeSec = frameDiff / fps;
-          ibis.push(timeSec);
-        }
-
-        const avgIbi = ibis.reduce((a, b) => a + b, 0) / ibis.length;
-        if (avgIbi > 0.35 && avgIbi < 1.4) {
-          bpm = Math.round(60 / avgIbi);
-        }
-
-        // Calculate HRV (SDNN)
-        if (ibis.length > 1) {
-          const meanIbi = avgIbi;
-          const variance = ibis.reduce((sum, ibi) => sum + Math.pow(ibi - meanIbi, 2), 0) / ibis.length;
-          hrv = Math.round(Math.sqrt(variance) * 1000);
-        }
+    let stressLevel: StressLevel = "Unknown";
+    if (heartRate > 0) {
+      if (heartRate > 90 || (hrv > 0 && hrv < 25)) {
+        stressLevel = "High";
+      } else if (heartRate > 80 || (hrv > 0 && hrv < 35)) {
+        stressLevel = "Moderate";
+      } else {
+        stressLevel = "Low";
       }
     }
 
-    // Clamp BPM to realistic biological range
-    bpm = Math.max(58, Math.min(135, bpm));
+    let healthScore = 0;
+    let riskLevel = "Unknown";
+    if (heartRate > 0) {
+      let score = 100;
+      if (heartRate < 60 || heartRate > 100) score -= 15;
+      if (stressLevel === "Moderate") score -= 10;
+      if (stressLevel === "High") score -= 25;
+      healthScore = Math.max(50, Math.min(100, score));
 
-    // Blood Pressure estimation based on BPM & pulse wave features
-    const systolic = Math.round(110 + (bpm - 70) * 0.4);
-    const diastolic = Math.round(72 + (bpm - 70) * 0.25);
-    const bloodPressure = `${systolic}/${diastolic}`;
-
-    // Oxygen level estimation SpO2 (96-99%)
-    const oxygenLevel = Math.round(96 + Math.random() * 3);
-
-    // Respiration Rate (breaths per minute: 12-20)
-    const respirationRate = Math.round(13 + (bpm - 60) * 0.1);
-
-    // Stress & Fatigue Index
-    let stressLevel = "Low";
-    if (bpm > 90 || hrv < 25) {
-      stressLevel = "High";
-    } else if (bpm > 80 || hrv < 35) {
-      stressLevel = "Moderate";
-    }
-
-    // Health Score calculation (0 - 100)
-    let score = 100;
-    if (bpm < 60 || bpm > 100) score -= 15;
-    if (stressLevel === "Moderate") score -= 10;
-    if (stressLevel === "High") score -= 25;
-    if (oxygenLevel < 97) score -= 5;
-    const healthScore = Math.max(50, Math.min(100, score));
-
-    // Risk level
-    let riskLevel = "Low";
-    if (healthScore < 70 || stressLevel === "High") {
-      riskLevel = "Moderate";
-    }
-    if (healthScore < 60) {
-      riskLevel = "High";
+      riskLevel = healthScore < 70 || stressLevel === "High" ? "Moderate" : "Low";
+      if (healthScore < 60) riskLevel = "High";
     }
 
     return {
-      heartRate: bpm,
-      bloodPressure,
-      oxygenLevel,
+      heartRate,
+      heartRateConfidence,
       stressLevel,
       healthScore,
       riskLevel,
-      respirationRate,
+      respirationRate: null,
+      bloodPressure: null,
+      oxygenLevel: null,
       signalBuffer: rawSignal,
     };
+  }
+
+  /**
+   * Heart rate from peak-to-peak (inter-beat interval) detection.
+   * Returns null when no reliable pulse is found.
+   */
+  private estimatePulse(rawSignal: number[]): PulseEstimate | null {
+    if (rawSignal.length <= 50) return null;
+
+    const peaks: number[] = [];
+    const threshold = 0.3;
+
+    for (let i = 1; i < rawSignal.length - 1; i++) {
+      if (
+        rawSignal[i] > threshold &&
+        rawSignal[i] > rawSignal[i - 1] &&
+        rawSignal[i] > rawSignal[i + 1]
+      ) {
+        // Ensure minimum peak distance (~0.35s -> max 170 BPM)
+        if (peaks.length === 0 || (i - peaks[peaks.length - 1]) > 10) {
+          peaks.push(i);
+        }
+      }
+    }
+
+    if (peaks.length < 2) return null;
+
+    // Estimate fps from real frame timing
+    const durationSec = (this.timestamps[this.timestamps.length - 1] - this.timestamps[0]) / 1000;
+    const fps = this.buffer.length / (durationSec || 1);
+
+    const ibis: number[] = [];
+    for (let i = 1; i < peaks.length; i++) {
+      const frameDiff = peaks[i] - peaks[i - 1];
+      const timeSec = frameDiff / fps;
+      if (timeSec > 0.35 && timeSec < 1.4) {
+        ibis.push(timeSec);
+      }
+    }
+
+    if (ibis.length === 0) return null;
+
+    const avgIbi = ibis.reduce((a, b) => a + b, 0) / ibis.length;
+    let bpm = Math.round(60 / avgIbi);
+    // Sanity clamp for biologically plausible heart rates; does not force "normal".
+    bpm = Math.max(35, Math.min(200, bpm));
+
+    let hrv = 0;
+    if (ibis.length > 1) {
+      const variance = ibis.reduce((sum, ibi) => sum + Math.pow(ibi - avgIbi, 2), 0) / ibis.length;
+      hrv = Math.round(Math.sqrt(variance) * 1000);
+    }
+
+    return { bpm, hrv, peaks: ibis.length + 1 };
   }
 
   public reset() {

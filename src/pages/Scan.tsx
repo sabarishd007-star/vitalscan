@@ -13,6 +13,7 @@ export default function Scan() {
   const [status, setStatus] = useState("Ready to Scan");
   const [progress, setProgress] = useState(0);
   const [heartRate, setHeartRate] = useState("--");
+  const [respirationRate, setRespirationRate] = useState("--");
   const [healthScore, setHealthScore] = useState("--");
   const [risk, setRisk] = useState("Unknown");
   const [loading, setLoading] = useState(false);
@@ -77,8 +78,8 @@ export default function Scan() {
       "🤖 Initializing AI Vision...",
       "📷 Detecting Face & Skin ROI...",
       "❤️ Measuring Heart Rate (rPPG)...",
-      "🩸 Estimating Blood Pressure & SpO2...",
-      "🫁 Analyzing Stress & Fatigue...",
+      "🫀 Analyzing Heart Rate Variability...",
+      "📋 Compiling Scan Results...",
       "📊 Generating AI Health Report...",
     ];
 
@@ -112,11 +113,11 @@ export default function Scan() {
         let calculatedRisk = result.riskLevel;
 
         const ageNum = parseInt(age);
-        if (!isNaN(ageNum) && ageNum > 60) {
+        if (calculatedScore > 0 && !isNaN(ageNum) && ageNum > 60) {
           calculatedScore = Math.max(50, calculatedScore - 5);
         }
         const sleepNum = parseInt(sleepHours);
-        if (!isNaN(sleepNum) && sleepNum < 6) {
+        if (calculatedScore > 0 && !isNaN(sleepNum) && sleepNum < 6) {
           calculatedScore = Math.max(50, calculatedScore - 10);
         }
         const stressNum = parseInt(userStress);
@@ -128,8 +129,10 @@ export default function Scan() {
           heart_rate: result.heartRate,
           blood_pressure: result.bloodPressure,
           oxygen_level: result.oxygenLevel,
+          respiration_rate: result.respirationRate,
           health_score: calculatedScore,
           risk_level: calculatedRisk,
+          stress_level: result.stressLevel,
         };
 
         try {
@@ -145,18 +148,20 @@ export default function Scan() {
           const message = err instanceof Error ? ` (${err.message})` : "";
           alert(`Scan Completed!${message}`);
         } finally {
-          setHeartRate(`${result.heartRate} BPM`);
-          setHealthScore(`${calculatedScore}%`);
+          setHeartRate(result.heartRate > 0 ? `${result.heartRate} BPM` : "—");
+          setRespirationRate(result.respirationRate ? `${result.respirationRate} bpm` : "Not measured");
+          setHealthScore(calculatedScore > 0 ? `${calculatedScore}%` : "—");
           setRisk(calculatedRisk);
           setStatus("✅ AI Scan Completed");
           setProgress(100);
 
           setHealthData({
-            heartRate: result.heartRate,
+            heartRate: result.heartRate > 0 ? result.heartRate : null,
             bloodPressure: result.bloodPressure,
             oxygen: result.oxygenLevel,
+            respirationRate: result.respirationRate,
             stress: result.stressLevel,
-            healthScore: calculatedScore,
+            healthScore: calculatedScore > 0 ? calculatedScore : null,
             risk: calculatedRisk,
           });
 
@@ -173,7 +178,7 @@ export default function Scan() {
       </h1>
 
       <div className="mx-auto mb-8 max-w-4xl rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-center text-sm text-amber-900">
-        <strong>Demo only:</strong> VitalScan is a wellness prototype, not a medical device. Do not use these estimates to diagnose, treat, or make medical decisions.
+        <strong>Demo only:</strong> VitalScan is a wellness prototype, not a medical device. Do not use these estimates to diagnose, treat, or make medical decisions. A camera cannot measure blood pressure or blood oxygen (SpO2); those vitals are never reported here.
       </div>
 
       <div className="grid md:grid-cols-2 gap-8">
@@ -316,7 +321,7 @@ export default function Scan() {
           AI Analysis Results
         </h2>
 
-        <div className="grid md:grid-cols-4 gap-6">
+        <div className="grid md:grid-cols-5 gap-6">
           <div className="bg-blue-100 rounded-xl p-6 text-center shadow-sm">
             <h3 className="text-xl font-bold text-blue-800">
               ❤️ Heart Rate
@@ -341,6 +346,15 @@ export default function Scan() {
             </h3>
             <p className="text-3xl font-extrabold text-yellow-900 mt-4">
               {risk}
+            </p>
+          </div>
+
+          <div className="bg-purple-100 rounded-xl p-6 text-center shadow-sm">
+            <h3 className="text-xl font-bold text-purple-800">
+              🫁 Respiration
+            </h3>
+            <p className="text-3xl font-extrabold text-purple-900 mt-4">
+              {respirationRate}
             </p>
           </div>
 

@@ -68,11 +68,12 @@ export default function Dashboard() {
         <section className="mt-10">
           <h2 className="mb-4 text-2xl font-bold text-slate-900">Latest scan metrics</h2>
           <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
-            <HealthCard title="Heart Rate" value={`${healthData.heartRate} BPM`} icon="♥" color="bg-red-100" />
-            <HealthCard title="Blood Pressure" value={healthData.bloodPressure} icon="⊞" color="bg-blue-100" />
-            <HealthCard title="Oxygen Level" value={`${healthData.oxygen}%`} icon="O₂" color="bg-green-100" />
+            <HealthCard title="Heart Rate" value={healthData.heartRate !== null ? `${healthData.heartRate} BPM` : "Not measured"} icon="♥" color="bg-red-100" />
+            <HealthCard title="Respiration" value={healthData.respirationRate !== null ? `${healthData.respirationRate} bpm` : "Not measured"} icon="🫁" color="bg-purple-100" />
+            <HealthCard title="Blood Pressure" value={healthData.bloodPressure ?? "Not measured"} icon="⊞" color="bg-blue-100" />
+            <HealthCard title="Oxygen Level" value={healthData.oxygen !== null ? `${healthData.oxygen}%` : "Not measured"} icon="O₂" color="bg-green-100" />
             <HealthCard title="Stress Level" value={healthData.stress} icon="•" color="bg-yellow-100" />
-            <HealthCard title="Health Score" value={`${healthData.healthScore}%`} icon="✓" color="bg-purple-100" />
+            <HealthCard title="Health Score" value={healthData.healthScore !== null ? `${healthData.healthScore}%` : "Not measured"} icon="✓" color="bg-purple-100" />
             <HealthCard title="Risk Level" value={healthData.risk} icon="!" color="bg-orange-100" />
           </div>
         </section>
