@@ -98,6 +98,22 @@ def crop_face_region(img: np.ndarray) -> np.ndarray:
     return _center_crop(img)
 
 
+def equalize_lighting(image_bgr: np.ndarray) -> np.ndarray:
+    """
+    Apply CLAHE to L-channel in CIE LAB color space to smooth room lighting shadows
+    before color and texture metric calculations.
+    """
+    lab = cv2.cvtColor(image_bgr, cv2.COLOR_BGR2LAB)
+    l, a, b = cv2.split(lab)
+
+    # Apply CLAHE to L-channel to smooth room lighting shadows
+    clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
+    cl = clahe.apply(l)
+
+    limg = cv2.merge((cl, a, b))
+    return cv2.cvtColor(limg, cv2.COLOR_LAB2BGR)
+
+
 # ---------------------------------------------------------------------------
 # Full preprocessing pipeline
 # ---------------------------------------------------------------------------
@@ -110,8 +126,8 @@ def preprocess_skin_image(image_bytes: bytes) -> np.ndarray:
     Pipeline:
       1. Decode JPEG/PNG/WebP bytes → BGR array
       2. Crop face region
-      3. Bilateral filter  — smooths sensor noise while preserving pore / texture edges
-      4. CLAHE on L* channel — corrects uneven lighting without oversaturating
+      3. CLAHE LAB lighting equalization — smooths room shadows
+      4. Bilateral filter — smooths sensor noise while preserving pore / texture edges
 
     Returns
     -------
@@ -129,15 +145,10 @@ def preprocess_skin_image(image_bytes: bytes) -> np.ndarray:
     # Step 1 — Face crop
     face = crop_face_region(img)
 
-    # Step 2 — Bilateral filter (edge-preserving denoise)
-    # d=9 neighbourhood diameter; sigmaColor/sigmaSpace=75 balances smoothing vs detail
-    denoised = cv2.bilateralFilter(face, d=9, sigmaColor=75, sigmaSpace=75)
+    # Step 2 — CLAHE lighting equalization in CIE LAB color space
+    equalized = equalize_lighting(face)
 
-    # Step 3 — CLAHE normalization in CIE LAB color space
-    lab = cv2.cvtColor(denoised, cv2.COLOR_BGR2LAB)
-    l_chan, a_chan, b_chan = cv2.split(lab)
-    clahe = cv2.createCLAHE(clipLimit=3.0, tileGridSize=(8, 8))
-    l_eq = clahe.apply(l_chan)
-    normalized = cv2.cvtColor(cv2.merge((l_eq, a_chan, b_chan)), cv2.COLOR_LAB2BGR)
+    # Step 3 — Bilateral filter (edge-preserving denoise)
+    denoised = cv2.bilateralFilter(equalized, d=9, sigmaColor=75, sigmaSpace=75)
 
-    return normalized
+    return denoised
