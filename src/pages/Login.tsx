@@ -60,6 +60,8 @@ export default function Login() {
         setError("Incorrect password. Please try again.");
       } else if (err?.code === "auth/too-many-requests") {
         setError("Access temporarily disabled due to many failed attempts. Try again later.");
+      } else if (err?.code === "auth/invalid-api-key") {
+        setError("Sign-in is unavailable because Firebase is not configured with a valid web API key. Please contact the site administrator.");
       } else {
         setError(err?.message || "Login failed. Please try again.");
       }

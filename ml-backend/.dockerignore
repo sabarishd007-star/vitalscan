@@ -1,0 +1,11 @@
+venv/
+__pycache__/
+*.py[cod]
+.env
+.env.*
+!/.env.example
+src/
+public/
+testsprite_tests/
+node_modules*/
+output/

@@ -1,0 +1,191 @@
+# VitalScan AI Skin Analysis — ML Backend
+
+This is the Python/FastAPI service for cosmetic skin-analysis estimates. It detects and crops a face server-side, normalizes luminance in CIE LAB, then runs the inference model.
+
+> This is not a medical device or diagnostic tool. Do not represent heuristic or unvalidated model output as a clinical result.
+
+---
+
+## 📁 Project Structure
+
+```
+ml-backend/
+├── main.py                    # FastAPI app & /analyze-skin endpoint
+├── model.py                   # SkinAnalysisModel + heuristic fallback
+├── train.py                   # Full model training script
+├── generate_mock_weights.py   # Creates random weights for pipeline testing
+├── requirements.txt           # Python dependencies
+└── weights/
+    └── skin_model.pth         # ← Place trained weights here
+```
+
+---
+
+## 🚀 Quick Start
+
+### Step 1 — Setup Virtual Environment
+
+```powershell
+cd ml-backend
+python -m venv venv
+.\venv\Scripts\activate
+pip install -r requirements.txt
+```
+
+### Step 2 — Start the Server
+
+```powershell
+.\venv\Scripts\uvicorn main:app --port 8000 --reload
+```
+
+Visit **http://localhost:8000** to confirm it's running. The server starts in **Heuristic Mock mode** until trained weights are present.
+
+---
+
+## 🔬 API Endpoints
+
+### `GET /`
+Returns server status and current running mode.
+
+```json
+{
+  "status": "online",
+  "service": "VitalScan AI Skin API",
+  "engine": "PyTorch + Heuristic Fallback",
+  "mode": "Heuristic Mock"
+}
+```
+
+### `GET /health`
+Use this endpoint for container and platform health checks. It does not run inference.
+
+```json
+{
+  "status": "healthy",
+  "device": "cpu",
+  "model_mode": "loaded",
+  "production_model_validated": false
+}
+```
+
+### `POST /analyze-skin`
+Accepts a camera image (JPEG, PNG, or WebP; maximum 10 MB), then detects and crops the face on the server. The API returns legacy UI scores (0–10) as well as a stable, user-facing `metrics` contract (0–100).
+
+**Form parameters:**
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `file` | image file | required | JPEG/PNG cropped face |
+| `age` | int | 25 | User age |
+| `sleepHours` | float | 7.0 | Sleep hours per night |
+| `waterIntake` | float | 2.5 | Water in litres/day |
+| `stressLevel` | int | 4 | Stress 1–10 |
+| `skinConcern` | string | none | Selected skin concern key |
+
+**Response:**
+```json
+{
+  "skinType": "Oily",
+  "overallScore": 6.4,
+  "analysisConfidence": 85,
+  "detectedConcerns": ["Acne & Breakouts", "Enlarged Pores"],
+  "acneLevel": 7.2,
+  "oiliness": 8.1,
+  "hydration": 4.5,
+  "overall_score": 64,
+  "metrics": {
+    "redness": { "score": 15, "status": "Low", "description": "Visible redness or irritation estimate." },
+    "pores": { "score": 42, "status": "Moderate", "description": "Appearance of pore visibility, mainly in the T-zone." },
+    "texture": { "score": 25, "status": "Low", "description": "Surface texture and visible roughness estimate." },
+    "blemishes": { "score": 10, "status": "Low", "description": "Visible blemish and breakout estimate." }
+  },
+  "disclaimer": "This analysis is for informational cosmetic care only and does not constitute a clinical medical diagnosis...",
+  ...
+}
+```
+
+---
+
+## 🧠 Running Modes
+
+| Mode | Condition | Description |
+|------|-----------|-------------|
+| **Heuristic Mock** | No weights file | Uses PIL color analysis + lifestyle adjustments |
+| **Real ML Mode** | `weights/skin_model.pth` present | Full PyTorch MobileNetV2 inference |
+
+### Test the full ML pipeline without real data
+
+Run the mock weights generator only to verify that the inference pipeline executes:
+
+```powershell
+python generate_mock_weights.py
+```
+
+Then restart uvicorn. The resulting outputs are random and are unsuitable for users or evaluation of accuracy.
+
+---
+
+## 🏋️ Training with Real Data
+
+### Dataset Format
+
+```
+dataset/
+├── images/
+│   ├── img_001.jpg
+│   └── ...
+└── labels.csv
+```
+
+`labels.csv` must have columns: `filename`, then one column per concern (values 0.0–1.0):
+```
+filename,acneLevel,darkCircles,oiliness,dryness,...
+img_001.jpg,0.7,0.3,0.6,0.2,...
+```
+
+### Run Training
+
+```powershell
+python train.py --dataset ./dataset --epochs 30 --batch_size 16
+```
+
+Best weights are automatically saved to `weights/skin_model.pth`.
+
+### Recommended Public Datasets
+- **ISIC Archive** — skin lesion images: https://www.isic-archive.com
+- **ACNE04 Dataset** — acne grading: https://github.com/xpwu95/LDL
+- **FFHQ** — high-quality face images: https://github.com/NVlabs/ffhq-dataset
+
+---
+
+## 🌐 Frontend Integration
+
+The React frontend sends the full, freshly captured camera frame to this API via `skinAnalysisService.ts`. The backend is the source of truth for face detection and preprocessing. A backend failure is shown to the user; a local fallback is available only when `VITE_ALLOW_LOCAL_ANALYSIS_FALLBACK=true` is intentionally set for development.
+
+Set the backend URL via environment variable in the React project:
+```
+VITE_ML_BACKEND_URL=http://localhost:8000
+```
+
+## Production configuration
+
+Set the following only in the API host's environment dashboard (never a committed file):
+
+```env
+APP_ENV=production
+ALLOWED_ORIGINS=https://app.yourdomain.com
+MODEL_VALIDATED=false
+```
+
+`ALLOWED_ORIGINS` must list exact frontend origins separated by commas. Wildcards are intentionally not permitted in production.
+The API refuses inference in production until `MODEL_VALIDATED=true` is deliberately set. Set it only after replacing the generated mock weights with a documented, independently validated model.
+
+## Docker deployment
+
+Build and run the service from this directory:
+
+```bash
+docker build -t vitalscan-skin-api .
+docker run --rm -p 8001:8001 --env-file .env vitalscan-skin-api
+```
+
+The included `Dockerfile` uses Python 3.10, installs the OpenCV runtime libraries, runs as a non-root user, and exposes `/health` for deployment monitoring. Hosting platforms may provide a `PORT` environment variable; the container honours it automatically.

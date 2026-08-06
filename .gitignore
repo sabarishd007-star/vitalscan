@@ -33,3 +33,8 @@ output/
 tmp/
 testsprite_tests/tmp/
 *.pdf
+
+# Python service artifacts
+ml-backend/venv/
+ml-backend/__pycache__/
+ml-backend/**/*.pyc

@@ -1,9 +1,12 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { analyzeSkinFromFrame, validateImageQuality } from "../utils/skinEngine";
+import { validateImageQuality, type SkinAnalysisResult } from "../utils/skinEngine";
+import { getFaceAlignment, type FaceAlignment } from "../utils/faceLandmarker";
 import { generateRecommendations } from "../utils/skinRecommendations";
 import { useSkin } from "../context/SkinContext";
 import { saveSkinReport, skinResultToReport } from "../services/skinReportService";
+import { analyzeSkinOnServer } from "../services/skinAnalysisService";
+import RealTimeSkinReport from "../components/RealTimeSkinReport";
 
 const SCAN_STEPS = [
   { emoji: "🤖", text: "Initializing AI Vision Engine..." },
@@ -68,7 +71,8 @@ export default function SkinScan() {
 
   // Quality check states
   const [qualityResult, setQualityResult] = useState<ReturnType<typeof validateImageQuality> | null>(null);
-  const [bypassValidation, setBypassValidation] = useState(false);
+  const [scanFeedback, setScanFeedback] = useState<string | null>(null);
+  const [faceAlignment, setFaceAlignment] = useState<FaceAlignment | null>(null);
 
   // Form inputs
   const [age, setAge] = useState("");
@@ -78,7 +82,8 @@ export default function SkinScan() {
   const [skinConcern, setSkinConcern] = useState("none");
   const [savedToDb, setSavedToDb] = useState<boolean | null>(null);
 
-  const [skinResult, setSkinResult] = useState<ReturnType<typeof analyzeSkinFromFrame> | null>(null);
+  const [skinResult, setSkinResult] = useState<SkinAnalysisResult | null>(null);
+  const [capturedImageUrl, setCapturedImageUrl] = useState<string | null>(null);
 
   // Camera init
   useEffect(() => {
@@ -125,54 +130,99 @@ export default function SkinScan() {
     return () => clearInterval(interval);
   }, [cameraActive, scanning, scanComplete]);
 
+  // MediaPipe Face Mesh validates the actual facial-landmark position, rather
+  // than relying only on skin-colour pixels in the camera frame.
+  useEffect(() => {
+    if (!cameraActive || scanning || scanComplete) return;
+    let cancelled = false;
+    const interval = window.setInterval(() => {
+      const video = videoRef.current;
+      if (!video || video.readyState < HTMLMediaElement.HAVE_CURRENT_DATA) return;
+
+      void getFaceAlignment(video, performance.now())
+        .then((alignment) => {
+          if (!cancelled) setFaceAlignment(alignment);
+        })
+        .catch(() => {
+          if (!cancelled) setFaceAlignment(null);
+        });
+    }, 700);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(interval);
+    };
+  }, [cameraActive, scanning, scanComplete]);
+
+  const captureIsReady = cameraActive;
+  const qualityRecommended = Boolean(
+    qualityResult?.isValid && faceAlignment?.detected && faceAlignment.centred && faceAlignment.level
+  );
+
   const startScan = async () => {
-    if (scanning) return;
+    if (scanning || !cameraActive) return;
     setScanning(true);
     setScanComplete(false);
     setSkinResult(null);
+    setCapturedImageUrl(null);
     setProgress(0);
     setCurrentStep(0);
     setSavedToDb(null);
+    setScanFeedback(null);
 
     const ageNum = parseInt(age) || 25;
     const sleepNum = parseFloat(sleepHours) || 7;
     const waterNum = parseFloat(waterIntake) || 2;
     const stressNum = parseInt(stressLevel) || 4;
 
+    // Start the API request immediately. The progress steps reflect live work
+    // while it is in flight instead of adding a fixed eight-second delay.
     let step = 0;
-    const timer = setInterval(async () => {
-      step++;
-      setCurrentStep(step - 1);
-      setProgress(Math.min(100, Math.round((step / SCAN_STEPS.length) * 100)));
+    const timer = window.setInterval(() => {
+      step = Math.min(step + 1, SCAN_STEPS.length - 1);
+      setCurrentStep(step);
+      setProgress(Math.min(92, Math.round(((step + 1) / SCAN_STEPS.length) * 92)));
+    }, 450);
 
-      if (step >= SCAN_STEPS.length) {
-        clearInterval(timer);
+    let result: SkinAnalysisResult;
+    try {
+      result = await analyzeSkinOnServer(
+        canvasRef.current!, videoRef.current!, ageNum, sleepNum, waterNum, stressNum, skinConcern
+      );
+    } catch (error) {
+      window.clearInterval(timer);
+      setScanning(false);
+      setProgress(0);
+      setScanFeedback(error instanceof Error ? error.message : "Unable to analyze this image. Please try again.");
+      return;
+    }
+    window.clearInterval(timer);
 
-        // Run skin analysis
-        const result = analyzeSkinFromFrame(
-          canvasRef.current!,
-          videoRef.current!,
-          ageNum, sleepNum, waterNum, stressNum, skinConcern
-        );
-        const recs = generateRecommendations(result);
-        setSkinResult(result);
-        setSkinData({ result, recommendations: recs });
+    if (result.analysisConfidence < 70) {
+      setScanning(false);
+      setProgress(0);
+      setScanFeedback("We could not get a reliable reading. Move into even lighting, keep your face centred, and try again.");
+      return;
+    }
 
-        // Save to Supabase
-        try {
-          const reportData = skinResultToReport(result, recs);
-          const { error } = await saveSkinReport(reportData);
-          setSavedToDb(!error);
-          if (error) console.warn("Skin report save error:", error);
-        } catch {
-          setSavedToDb(false);
-        }
+    setCapturedImageUrl(canvasRef.current?.toDataURL("image/jpeg", 0.9) ?? null);
+    const recs = generateRecommendations(result);
+    setSkinResult(result);
+    setSkinData({ result, recommendations: recs });
 
-        setScanning(false);
-        setScanComplete(true);
-        setProgress(100);
-      }
-    }, 900);
+    try {
+      const reportData = skinResultToReport(result, recs);
+      const { error } = await saveSkinReport(reportData);
+      setSavedToDb(!error);
+      if (error) console.warn("Skin report save error:", error);
+    } catch {
+      setSavedToDb(false);
+    }
+
+    setCurrentStep(SCAN_STEPS.length - 1);
+    setScanning(false);
+    setScanComplete(true);
+    setProgress(100);
   };
 
   const overallScoreColor =
@@ -275,7 +325,9 @@ export default function SkinScan() {
 
             {/* Real-time Quality Indicators */}
             {cameraActive && !scanning && !scanComplete && (
-              <div className="mt-4 p-4 rounded-2xl bg-white/5 border border-white/10 grid grid-cols-3 gap-2 text-center text-xs">
+              <div className="mt-4 p-4 rounded-2xl bg-white/5 border border-white/10 text-center text-xs">
+                <p className="mb-3 text-white/60">Use even front lighting, face the camera directly, and remove filters or tinted glasses.</p>
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                 <div>
                   <p className="text-white/40 mb-1">💡 Lighting</p>
                   {!qualityResult ? (
@@ -284,6 +336,16 @@ export default function SkinScan() {
                     <span className="text-emerald-400 font-semibold">🟢 Good</span>
                   ) : (
                     <span className="text-amber-400 font-semibold">⚠️ {qualityResult.lighting.status}</span>
+                  )}
+                </div>
+                <div>
+                  <p className="text-white/40 mb-1">Face Mesh</p>
+                  {!faceAlignment ? (
+                    <span className="text-white/60">Checking...</span>
+                  ) : faceAlignment.detected && faceAlignment.centred && faceAlignment.level ? (
+                    <span className="text-emerald-400 font-semibold">Tracked</span>
+                  ) : (
+                    <span className="text-amber-400 font-semibold">Face forward</span>
                   )}
                 </div>
                 <div>
@@ -305,6 +367,7 @@ export default function SkinScan() {
                   ) : (
                     <span className="text-amber-400 font-semibold">⚠️ Align Face</span>
                   )}
+                </div>
                 </div>
               </div>
             )}
@@ -355,6 +418,17 @@ export default function SkinScan() {
                   <option value="sensitive" className="bg-slate-800">Sensitive / Redness</option>
                   <option value="darkCircles" className="bg-slate-800">Dark Circles</option>
                   <option value="pigmentation" className="bg-slate-800">Dark Spots / Pigmentation</option>
+                  <option value="melasma" className="bg-slate-800">Melasma</option>
+                  <option value="tanning" className="bg-slate-800">Tanning / Sun Damage</option>
+                  <option value="enlargedPores" className="bg-slate-800">Enlarged Pores</option>
+                  <option value="texture" className="bg-slate-800">Uneven Texture</option>
+                  <option value="dullness" className="bg-slate-800">Dullness / Lack of Radiance</option>
+                  <option value="acneScars" className="bg-slate-800">Acne Scars / Marks</option>
+                  <option value="aging" className="bg-slate-800">Ageing / Fine Lines</option>
+                  <option value="puffiness" className="bg-slate-800">Under-eye Puffiness</option>
+                  <option value="dehydration" className="bg-slate-800">Dehydration</option>
+                  <option value="milia" className="bg-slate-800">Milia</option>
+                  <option value="sunburn" className="bg-slate-800">Sunburn / Irritation</option>
                 </select>
               </div>
 
@@ -402,7 +476,7 @@ export default function SkinScan() {
 
             <button
               onClick={startScan}
-              disabled={scanning || (!qualityResult?.isValid && !bypassValidation && cameraActive)}
+              disabled={scanning || !cameraActive || !captureIsReady}
               className="mt-6 w-full py-4 rounded-2xl font-bold text-white text-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
               style={{
                 background: scanning ? "rgba(236,72,153,0.3)" : "linear-gradient(135deg, #ec4899, #8b5cf6)",
@@ -419,16 +493,14 @@ export default function SkinScan() {
               )}
             </button>
 
-            {!qualityResult?.isValid && cameraActive && !scanning && !scanComplete && (
+            {!qualityRecommended && cameraActive && !scanning && !scanComplete && (
               <div className="mt-3 text-center">
-                <p className="text-white/50 text-xs mb-1.5">⚠️ For accurate results, satisfy all checks on the left.</p>
-                <button
-                  onClick={() => setBypassValidation(true)}
-                  className="text-pink-400 hover:text-pink-300 text-xs font-semibold underline transition"
-                >
-                  Bypass validation checks and scan anyway
-                </button>
+                <p className="text-white/50 text-xs mb-1.5">💡 Tip: For optimal accuracy, keep your face centered in good lighting.</p>
               </div>
+            )}
+
+            {scanFeedback && (
+              <p className="mt-3 rounded-xl border border-amber-500/40 bg-amber-500/10 p-3 text-center text-xs text-amber-200">{scanFeedback}</p>
             )}
 
             {scanComplete && (
@@ -527,6 +599,39 @@ export default function SkinScan() {
                 })}
               </div>
             </div>
+
+            {skinResult.localized_analysis && capturedImageUrl && (
+              <RealTimeSkinReport analysis={skinResult.localized_analysis} imageUrl={capturedImageUrl} />
+            )}
+
+            {/* Server-provided, user-facing 0–100 metric contract */}
+            {skinResult.metrics && (
+              <div className="rounded-3xl border border-white/20 bg-white/10 p-6 shadow-2xl">
+                <div className="mb-4 flex flex-wrap items-baseline justify-between gap-2">
+                  <h2 className="text-xl font-bold text-white">Skin Health Breakdown</h2>
+                  <p className="text-sm text-white/60">
+                    Overall score: <span className="font-bold text-white">{skinResult.overall_score ?? Math.round(skinResult.overallScore * 10)}/100</span>
+                  </p>
+                </div>
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  {Object.entries(skinResult.metrics).map(([key, metric]) => (
+                    <div key={key} className="rounded-2xl border border-white/15 bg-slate-950/30 p-4">
+                      <div className="flex items-start justify-between gap-3">
+                        <h3 className="capitalize font-semibold text-white">{key}</h3>
+                        <span className="rounded-full bg-pink-500/20 px-2 py-1 text-xs font-bold text-pink-200">{metric.score}/100</span>
+                      </div>
+                      <p className="mt-2 text-sm font-medium text-emerald-300">{metric.status}</p>
+                      <p className="mt-1 text-xs leading-relaxed text-white/60">{metric.description}</p>
+                    </div>
+                  ))}
+                </div>
+                {skinResult.disclaimer && (
+                  <p className="mt-5 border-t border-white/10 pt-4 text-center text-xs italic leading-relaxed text-white/50">
+                    {skinResult.disclaimer}
+                  </p>
+                )}
+              </div>
+            )}
 
             {/* Quick Tip Banner */}
             <div className="bg-gradient-to-r from-pink-600/20 to-violet-600/20 border border-pink-500/30 rounded-2xl p-5 flex items-center gap-4">

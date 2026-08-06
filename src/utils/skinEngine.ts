@@ -9,6 +9,31 @@
  * 5. Multi-label 20 Skin Concerns scoring with confidence estimation
  */
 
+export interface SkinMetricDetail {
+  score: number; // 0-100 API-facing score
+  status: string;
+  description: string;
+}
+
+export interface LocalizedMetric {
+  score: number;
+  max: number;
+  description: string;
+}
+
+export interface SkinBoundingRegion {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+}
+
+export interface LocalizedAnalysis {
+  primary_skin_type: SkinAnalysisResult["skinType"];
+  metrics: Record<string, LocalizedMetric>;
+  bounding_regions: Record<string, SkinBoundingRegion>;
+}
+
 export interface SkinAnalysisResult {
   skinType: "Oily" | "Dry" | "Combination" | "Normal" | "Sensitive";
   acneLevel: number;        // 0-10
@@ -39,6 +64,13 @@ export interface SkinAnalysisResult {
   analysisConfidence: number; // 0-100%
   detectedConcerns: string[]; // List of active issues above severity threshold
   timestamp: number;
+
+  // FastAPI multi-metric contract. Optional so the explicitly enabled local
+  // development fallback remains compatible with the existing UI.
+  overall_score?: number;
+  metrics?: Record<string, SkinMetricDetail>;
+  disclaimer?: string;
+  localized_analysis?: LocalizedAnalysis;
 }
 
 export interface QualityCheckResult {
@@ -229,7 +261,7 @@ export function validateImageQuality(canvas: HTMLCanvasElement): QualityCheckRes
 
 // ─── Dynamic Bounding Box Face Detector ─────────────────────────────────
 
-function detectFaceBoundingBox(
+export function detectFaceBoundingBox(
   data: Uint8ClampedArray,
   width: number,
   height: number
@@ -622,12 +654,96 @@ export function analyzeSkinFromFrame(
   const adjDarkCircles = clamp(darkCircles + darkCirclesAdj, 0, 10);
   const adjDehydration = clamp(dehydration + (userWaterIntake < 1.5 ? 1.5 : 0), 0, 10);
 
+  // ─── User Concern Boosts ──────────────────────────────────────────────
+  // Blend camera reading with a minimum floor based on what user reported.
+  // This ensures selected concern is always meaningfully reflected in scores.
+  let concernAcne = acneLevel;
+  let concernBlackheads = blackheads;
+  let concernOiliness = adjOiliness;
+  let concernDryness = adjDryness;
+  let concernRedness = redness;
+  let concernDarkCircles = adjDarkCircles;
+  let concernPigmentation = pigmentation;
+  let concernMelasma = melasma;
+  let concernTanning = tanning;
+  let concernPores = poreVisibility;
+  let concernTexture = texture;
+  let concernDullness = dullness;
+  let concernAcneScars = acneScars;
+  let concernAging = aging;
+  let concernPuffiness = puffiness;
+  let concernHydration = adjHydration;
+  let concernDehydration = adjDehydration;
+  let concernMilia = milia;
+  let concernSunburn = sunburn;
+
+  const BOOST = 2.0; // how strongly we shift towards user-reported concern
+
+  if (userConcern === "acne") {
+    concernAcne = clamp(Math.max(concernAcne, acneLevel + BOOST), 0, 10);
+    concernBlackheads = clamp(Math.max(concernBlackheads, blackheads + 0.8), 0, 10);
+    concernPores = clamp(Math.max(concernPores, poreVisibility + 0.6), 0, 10);
+  } else if (userConcern === "blackheads") {
+    concernBlackheads = clamp(Math.max(concernBlackheads, blackheads + BOOST), 0, 10);
+    concernPores = clamp(Math.max(concernPores, poreVisibility + 1.0), 0, 10);
+    concernOiliness = clamp(Math.max(concernOiliness, adjOiliness + 0.6), 0, 10);
+  } else if (userConcern === "oily") {
+    concernOiliness = clamp(Math.max(concernOiliness, adjOiliness + BOOST), 0, 10);
+    concernPores = clamp(Math.max(concernPores, poreVisibility + 0.8), 0, 10);
+  } else if (userConcern === "dry") {
+    concernDryness = clamp(Math.max(concernDryness, adjDryness + BOOST), 0, 10);
+    concernHydration = clamp(Math.min(concernHydration, adjHydration - 1.0), 0, 10);
+    concernDehydration = clamp(Math.max(concernDehydration, adjDehydration + 1.2), 0, 10);
+  } else if (userConcern === "combination") {
+    concernOiliness = clamp(Math.max(concernOiliness, 4.5), 0, 10);
+    concernDryness = clamp(Math.max(concernDryness, 4.5), 0, 10);
+  } else if (userConcern === "sensitive") {
+    concernRedness = clamp(Math.max(concernRedness, redness + BOOST), 0, 10);
+  } else if (userConcern === "darkCircles") {
+    concernDarkCircles = clamp(Math.max(concernDarkCircles, adjDarkCircles + BOOST), 0, 10);
+  } else if (userConcern === "pigmentation") {
+    concernPigmentation = clamp(Math.max(concernPigmentation, pigmentation + BOOST), 0, 10);
+  } else if (userConcern === "melasma") {
+    concernMelasma = clamp(Math.max(concernMelasma, melasma + BOOST), 0, 10);
+    concernPigmentation = clamp(Math.max(concernPigmentation, pigmentation + 0.8), 0, 10);
+  } else if (userConcern === "tanning") {
+    concernTanning = clamp(Math.max(concernTanning, tanning + BOOST), 0, 10);
+    concernPigmentation = clamp(Math.max(concernPigmentation, pigmentation + 0.6), 0, 10);
+  } else if (userConcern === "enlargedPores") {
+    concernPores = clamp(Math.max(concernPores, poreVisibility + BOOST), 0, 10);
+    concernOiliness = clamp(Math.max(concernOiliness, adjOiliness + 0.6), 0, 10);
+  } else if (userConcern === "texture") {
+    concernTexture = clamp(Math.max(concernTexture, texture + BOOST), 0, 10);
+    concernPores = clamp(Math.max(concernPores, poreVisibility + 0.6), 0, 10);
+  } else if (userConcern === "dullness") {
+    concernDullness = clamp(Math.max(concernDullness, dullness + BOOST), 0, 10);
+    concernHydration = clamp(Math.min(concernHydration, adjHydration - 0.8), 0, 10);
+  } else if (userConcern === "acneScars") {
+    concernAcneScars = clamp(Math.max(concernAcneScars, acneScars + BOOST), 0, 10);
+    concernPigmentation = clamp(Math.max(concernPigmentation, pigmentation + 0.6), 0, 10);
+  } else if (userConcern === "aging") {
+    concernAging = clamp(Math.max(concernAging, aging + BOOST), 0, 10);
+    concernTexture = clamp(Math.max(concernTexture, texture + 0.6), 0, 10);
+  } else if (userConcern === "puffiness") {
+    concernPuffiness = clamp(Math.max(concernPuffiness, puffiness + BOOST), 0, 10);
+    concernDarkCircles = clamp(Math.max(concernDarkCircles, adjDarkCircles + 0.6), 0, 10);
+  } else if (userConcern === "dehydration") {
+    concernDehydration = clamp(Math.max(concernDehydration, adjDehydration + BOOST), 0, 10);
+    concernDryness = clamp(Math.max(concernDryness, adjDryness + 0.8), 0, 10);
+    concernHydration = clamp(Math.min(concernHydration, adjHydration - 1.0), 0, 10);
+  } else if (userConcern === "milia") {
+    concernMilia = clamp(Math.max(concernMilia, milia + BOOST), 0, 10);
+  } else if (userConcern === "sunburn") {
+    concernSunburn = clamp(Math.max(concernSunburn, sunburn + BOOST), 0, 10);
+    concernRedness = clamp(Math.max(concernRedness, redness + 0.8), 0, 10);
+  }
+
   // Skin type determination
   let skinType: SkinAnalysisResult["skinType"] = "Normal";
-  if (adjOiliness > 6.0) skinType = "Oily";
-  else if (adjDryness > 6.0) skinType = "Dry";
-  else if (adjOiliness > 4.2 && adjDryness > 4.2) skinType = "Combination";
-  else if (redness > 5.5) skinType = "Sensitive";
+  if (concernOiliness > 6.0) skinType = "Oily";
+  else if (concernDryness > 6.0) skinType = "Dry";
+  else if (concernOiliness > 4.2 && concernDryness > 4.2) skinType = "Combination";
+  else if (concernRedness > 5.5) skinType = "Sensitive";
 
   // Override with user concern if strongly stated
   if (userConcern === "dry") skinType = "Dry";
@@ -635,51 +751,77 @@ export function analyzeSkinFromFrame(
   if (userConcern === "sensitive") skinType = "Sensitive";
   if (userConcern === "combination") skinType = "Combination";
 
-  // Overall skin score: weighted composite (higher is better)
+  // Overall skin score: weighted composite using concern-adjusted values (higher is better)
   const overallScore = clamp(
     addNoise(
       10
-      - acneLevel * 0.16
-      - adjDarkCircles * 0.08
-      - adjOiliness * 0.08
-      - adjDryness * 0.08
-      - redness * 0.08
-      - poreVisibility * 0.06
-      - pigmentation * 0.06
-      - texture * 0.06
-      - aging * 0.06
-      - blackheads * 0.04
-      - melasma * 0.04
-      - tanning * 0.04
-      - acneScars * 0.04
+      - concernAcne * 0.16
+      - concernDarkCircles * 0.08
+      - concernOiliness * 0.08
+      - concernDryness * 0.08
+      - concernRedness * 0.08
+      - concernPores * 0.06
+      - concernPigmentation * 0.06
+      - concernTexture * 0.06
+      - concernAging * 0.06
+      - concernBlackheads * 0.04
+      - concernMelasma * 0.04
+      - concernTanning * 0.04
+      - concernAcneScars * 0.04
       + glowScore * 0.12
-      + adjHydration * 0.08,
+      + concernHydration * 0.08,
       0.4
     ),
     1, 10
   );
 
-  // Auto-detect concerns above threshold of 4.5
+  // Auto-detect concerns above threshold (using concern-boosted values)
   const detectedConcerns: string[] = [];
-  if (acneLevel >= 4.5) detectedConcerns.push("Acne & Breakouts");
-  if (blackheads >= 4.5) detectedConcerns.push("Blackheads / Whiteheads");
-  if (adjOiliness >= 6.0) detectedConcerns.push("Oily / Shiny Skin");
-  if (adjDryness >= 6.0) detectedConcerns.push("Dry / Flaky Skin");
+  if (concernAcne >= 4.5) detectedConcerns.push("Acne & Breakouts");
+  if (concernBlackheads >= 4.5) detectedConcerns.push("Blackheads / Whiteheads");
+  if (concernOiliness >= 6.0) detectedConcerns.push("Oily / Shiny Skin");
+  if (concernDryness >= 6.0) detectedConcerns.push("Dry / Flaky Skin");
   if (skinType === "Combination") detectedConcerns.push("Combination Skin");
-  if (redness >= 5.0) detectedConcerns.push("Sensitive / Redness");
-  if (adjDarkCircles >= 5.0) detectedConcerns.push("Dark Circles");
-  if (pigmentation >= 5.0) detectedConcerns.push("Dark Spots / Pigmentation");
-  if (melasma >= 4.5) detectedConcerns.push("Melasma");
-  if (tanning >= 5.0) detectedConcerns.push("Tanning / Sun Damage");
-  if (poreVisibility >= 5.5) detectedConcerns.push("Enlarged Pores");
-  if (texture >= 5.5) detectedConcerns.push("Uneven Texture");
-  if (dullness >= 5.5) detectedConcerns.push("Dullness / Lack of Radiance");
-  if (acneScars >= 4.5) detectedConcerns.push("Acne Scars / Marks");
-  if (aging >= 4.5) detectedConcerns.push("Ageing / Fine Lines");
-  if (puffiness >= 4.5) detectedConcerns.push("Under-eye Puffiness");
-  if (adjDehydration >= 5.0) detectedConcerns.push("Dehydration");
-  if (milia >= 4.5) detectedConcerns.push("Milia");
-  if (sunburn >= 4.5) detectedConcerns.push("Sunburn / Irritation");
+  if (concernRedness >= 5.0) detectedConcerns.push("Sensitive / Redness");
+  if (concernDarkCircles >= 5.0) detectedConcerns.push("Dark Circles");
+  if (concernPigmentation >= 5.0) detectedConcerns.push("Dark Spots / Pigmentation");
+  if (concernMelasma >= 4.5) detectedConcerns.push("Melasma");
+  if (concernTanning >= 5.0) detectedConcerns.push("Tanning / Sun Damage");
+  if (concernPores >= 5.5) detectedConcerns.push("Enlarged Pores");
+  if (concernTexture >= 5.5) detectedConcerns.push("Uneven Texture");
+  if (concernDullness >= 5.5) detectedConcerns.push("Dullness / Lack of Radiance");
+  if (concernAcneScars >= 4.5) detectedConcerns.push("Acne Scars / Marks");
+  if (concernAging >= 4.5) detectedConcerns.push("Ageing / Fine Lines");
+  if (concernPuffiness >= 4.5) detectedConcerns.push("Under-eye Puffiness");
+  if (concernDehydration >= 5.0) detectedConcerns.push("Dehydration");
+  if (concernMilia >= 4.5) detectedConcerns.push("Milia");
+  if (concernSunburn >= 4.5) detectedConcerns.push("Sunburn / Irritation");
+
+  // Always include the user's selected concern in detected list (with human-readable label)
+  const concernLabelMap: Record<string, string> = {
+    acne: "Acne & Breakouts",
+    blackheads: "Blackheads / Whiteheads",
+    oily: "Oily / Shiny Skin",
+    dry: "Dry / Flaky Skin",
+    combination: "Combination Skin",
+    sensitive: "Sensitive / Redness",
+    darkCircles: "Dark Circles",
+    pigmentation: "Dark Spots / Pigmentation",
+    melasma: "Melasma",
+    tanning: "Tanning / Sun Damage",
+    enlargedPores: "Enlarged Pores",
+    texture: "Uneven Texture",
+    dullness: "Dullness / Lack of Radiance",
+    acneScars: "Acne Scars / Marks",
+    aging: "Ageing / Fine Lines",
+    puffiness: "Under-eye Puffiness",
+    dehydration: "Dehydration",
+    milia: "Milia",
+    sunburn: "Sunburn / Irritation",
+  };
+  if (userConcern !== "none" && concernLabelMap[userConcern] && !detectedConcerns.includes(concernLabelMap[userConcern])) {
+    detectedConcerns.unshift(concernLabelMap[userConcern]); // add at front as primary concern
+  }
 
   // Confidence estimation based on face detection and image quality
   const quality = validateImageQuality(canvas);
@@ -691,29 +833,29 @@ export function analyzeSkinFromFrame(
 
   return {
     skinType,
-    acneLevel: Math.round(acneLevel * 10) / 10,
-    darkCircles: Math.round(adjDarkCircles * 10) / 10,
-    oiliness: Math.round(adjOiliness * 10) / 10,
-    dryness: Math.round(adjDryness * 10) / 10,
-    redness: Math.round(redness * 10) / 10,
-    poreVisibility: Math.round(poreVisibility * 10) / 10,
-    pigmentation: Math.round(pigmentation * 10) / 10,
-    texture: Math.round(texture * 10) / 10,
+    acneLevel: Math.round(concernAcne * 10) / 10,
+    darkCircles: Math.round(concernDarkCircles * 10) / 10,
+    oiliness: Math.round(concernOiliness * 10) / 10,
+    dryness: Math.round(concernDryness * 10) / 10,
+    redness: Math.round(concernRedness * 10) / 10,
+    poreVisibility: Math.round(concernPores * 10) / 10,
+    pigmentation: Math.round(concernPigmentation * 10) / 10,
+    texture: Math.round(concernTexture * 10) / 10,
     glowScore: Math.round(glowScore * 10) / 10,
-    hydration: Math.round(adjHydration * 10) / 10,
+    hydration: Math.round(concernHydration * 10) / 10,
     overallScore: Math.round(overallScore * 10) / 10,
 
     // Additional concerns
-    blackheads: Math.round(blackheads * 10) / 10,
-    melasma: Math.round(melasma * 10) / 10,
-    tanning: Math.round(tanning * 10) / 10,
-    dullness: Math.round(dullness * 10) / 10,
-    acneScars: Math.round(acneScars * 10) / 10,
-    aging: Math.round(aging * 10) / 10,
-    puffiness: Math.round(puffiness * 10) / 10,
-    dehydration: Math.round(adjDehydration * 10) / 10,
-    milia: Math.round(milia * 10) / 10,
-    sunburn: Math.round(sunburn * 10) / 10,
+    blackheads: Math.round(concernBlackheads * 10) / 10,
+    melasma: Math.round(concernMelasma * 10) / 10,
+    tanning: Math.round(concernTanning * 10) / 10,
+    dullness: Math.round(concernDullness * 10) / 10,
+    acneScars: Math.round(concernAcneScars * 10) / 10,
+    aging: Math.round(concernAging * 10) / 10,
+    puffiness: Math.round(concernPuffiness * 10) / 10,
+    dehydration: Math.round(concernDehydration * 10) / 10,
+    milia: Math.round(concernMilia * 10) / 10,
+    sunburn: Math.round(concernSunburn * 10) / 10,
 
     analysisConfidence,
     detectedConcerns,
