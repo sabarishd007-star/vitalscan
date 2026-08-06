@@ -103,6 +103,33 @@ Accepts a camera image (JPEG, PNG, or WebP; maximum 10 MB), then detects and cro
 }
 ```
 
+### `POST /api/v2/analyze-all-conditions`
+Accepts the same image upload as `/analyze-skin` but requires no ML weights. Runs the zone-masked CV metric pipeline (`app/services/skin_metrics.py`) and returns all 18 condition scores on the 0–10 scale.
+
+### Report history — `POST/GET/DELETE /api/reports`
+The scan report history used by the frontend (`src/services/reportService.ts`).
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/api/reports` | List stored reports, newest first |
+| `POST` | `/api/reports` | Save a report; returns the record with `id` + `createdAt` (201) |
+| `DELETE` | `/api/reports/{id}` | Delete a report (404 when the id does not exist) |
+
+Storage (`app/services/report_store.py`): a local JSON store at `ml-backend/data/reports.json` by default (gitignored; zero-config dev fallback), or a Supabase `report_history` table when `SUPABASE_URL`/`SUPABASE_KEY` are configured. Store failures return 503.
+
+**`POST /api/reports` payload (camelCase, as sent by the frontend):**
+```json
+{
+  "heartRate": 72,
+  "bloodPressure": "118/76",
+  "oxygenLevel": 97,
+  "respirationRate": null,
+  "healthScore": 84,
+  "riskLevel": "Low",
+  "stressLevel": "Low"
+}
+```
+
 ---
 
 ## 🧠 Running Modes
