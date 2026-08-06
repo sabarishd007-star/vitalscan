@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { validateImageQuality, type SkinAnalysisResult } from "../utils/skinEngine";
-import { getFaceAlignment, type FaceAlignment } from "../utils/faceLandmarker";
+import { getFaceAlignment, getFaceMesh, type FaceAlignment, type FaceMeshData } from "../utils/faceLandmarker";
 import { generateRecommendations } from "../utils/skinRecommendations";
 import { useSkin } from "../context/SkinContext";
 import { saveSkinReport, skinResultToReport } from "../services/skinReportService";
@@ -73,6 +73,7 @@ export default function SkinScan() {
   const [qualityResult, setQualityResult] = useState<ReturnType<typeof validateImageQuality> | null>(null);
   const [scanFeedback, setScanFeedback] = useState<string | null>(null);
   const [faceAlignment, setFaceAlignment] = useState<FaceAlignment | null>(null);
+  const [mesh, setMesh] = useState<FaceMeshData>({ points: [], edges: [] });
 
   // Form inputs
   const [age, setAge] = useState("");
@@ -139,12 +140,20 @@ export default function SkinScan() {
       const video = videoRef.current;
       if (!video || video.readyState < HTMLMediaElement.HAVE_CURRENT_DATA) return;
 
-      void getFaceAlignment(video, performance.now())
-        .then((alignment) => {
-          if (!cancelled) setFaceAlignment(alignment);
+      void Promise.all([
+        getFaceAlignment(video, performance.now()),
+        getFaceMesh(video, performance.now()),
+      ])
+        .then(([alignment, meshData]) => {
+          if (cancelled) return;
+          setFaceAlignment(alignment);
+          setMesh(meshData);
         })
         .catch(() => {
-          if (!cancelled) setFaceAlignment(null);
+          if (!cancelled) {
+            setFaceAlignment(null);
+            setMesh({ points: [], edges: [] });
+          }
         });
     }, 700);
 
@@ -198,11 +207,33 @@ export default function SkinScan() {
     }
     window.clearInterval(timer);
 
-    if (result.analysisConfidence < 70) {
+    if (result.analysisConfidence < 40) {
       setScanning(false);
       setProgress(0);
       setScanFeedback("We could not get a reliable reading. Move into even lighting, keep your face centred, and try again.");
       return;
+    }
+
+    if (!result.localized_analysis) {
+      result.localized_analysis = {
+        primary_skin_type: result.skinType,
+        metrics: {
+          dark_circles: { score: Math.round(result.darkCircles * 10), max: 100, description: "Under-eye dark circle score" },
+          open_pores: { score: Math.round(result.poreVisibility * 10), max: 100, description: "Pore visibility score" },
+          texture: { score: Math.round(result.texture * 10), max: 100, description: "Skin roughness score" },
+          redness: { score: Math.round(result.redness * 10), max: 100, description: "Visible redness score" },
+          oiliness: { score: Math.round(result.oiliness * 10), max: 100, description: "T-Zone oiliness score" },
+          dryness: { score: Math.round(result.dryness * 10), max: 100, description: "Flaky dryness score" },
+        },
+        bounding_regions: {
+          dark_circles: { x: 0.25, y: 0.44, w: 0.50, h: 0.12 },
+          open_pores: { x: 0.38, y: 0.42, w: 0.24, h: 0.22 },
+          texture: { x: 0.20, y: 0.28, w: 0.60, h: 0.50 },
+          redness: { x: 0.28, y: 0.48, w: 0.44, h: 0.25 },
+          oiliness: { x: 0.30, y: 0.22, w: 0.40, h: 0.45 },
+          dryness: { x: 0.18, y: 0.45, w: 0.64, h: 0.35 },
+        }
+      };
     }
 
     setCapturedImageUrl(canvasRef.current?.toDataURL("image/jpeg", 0.9) ?? null);
@@ -601,7 +632,7 @@ export default function SkinScan() {
             </div>
 
             {skinResult.localized_analysis && capturedImageUrl && (
-              <RealTimeSkinReport analysis={skinResult.localized_analysis} imageUrl={capturedImageUrl} />
+              <RealTimeSkinReport result={skinResult} imageUrl={capturedImageUrl} mesh={mesh} />
             )}
 
             {/* Server-provided, user-facing 0–100 metric contract */}

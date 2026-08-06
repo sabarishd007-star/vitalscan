@@ -8,6 +8,16 @@ export interface FaceAlignment {
   landmarkCount: number;
 }
 
+export interface MeshPoint {
+  x: number;
+  y: number;
+}
+
+export interface FaceMeshData {
+  points: MeshPoint[];
+  edges: [number, number][];
+}
+
 let faceLandmarkerPromise: Promise<FaceLandmarker> | null = null;
 
 async function getFaceLandmarker(): Promise<FaceLandmarker> {
@@ -78,4 +88,37 @@ export async function getFaceAlignment(
     score: Math.round((centreScore * 0.5 + sizeScore * 0.25 + levelScore * 0.25) * 100),
     landmarkCount: landmarks.length,
   };
+}
+
+/**
+ * Returns the real MediaPipe face-mesh landmark points plus a curated set of
+ * edges (face oval, brows, eyes, lips) so the HUD wireframe tracks the actual
+ * face in the frame rather than a static template. Empty when no face is found.
+ */
+export async function getFaceMesh(
+  video: HTMLVideoElement,
+  timestamp: number
+): Promise<FaceMeshData> {
+  const faceLandmarker = await getFaceLandmarker();
+  const result = faceLandmarker.detectForVideo(video, timestamp);
+  const landmarks = result.faceLandmarks[0];
+
+  if (!landmarks?.length) {
+    return { points: [], edges: [] };
+  }
+
+  const points: MeshPoint[] = landmarks.map((point) => ({ x: point.x, y: point.y }));
+  const connections = [
+    FaceLandmarker.FACE_LANDMARKS_FACE_OVAL ?? [],
+    FaceLandmarker.FACE_LANDMARKS_LEFT_EYEBROW ?? [],
+    FaceLandmarker.FACE_LANDMARKS_RIGHT_EYEBROW ?? [],
+    FaceLandmarker.FACE_LANDMARKS_LEFT_EYE ?? [],
+    FaceLandmarker.FACE_LANDMARKS_RIGHT_EYE ?? [],
+    FaceLandmarker.FACE_LANDMARKS_LIPS ?? [],
+  ];
+  const edges: [number, number][] = connections
+    .flat()
+    .map((connection) => [connection.start, connection.end] as [number, number]);
+
+  return { points, edges };
 }
