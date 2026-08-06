@@ -32,6 +32,9 @@ except ImportError:
 # Service imports — resolve correctly when uvicorn runs from ml-backend/
 from app.services.preprocessing import preprocess_skin_image
 from app.services.face_mesh import mp_face_mesh, ZONES, get_zone_mask
+from app.services.report_store import delete_report as delete_stored_report
+from app.services.report_store import list_reports as list_stored_reports
+from app.services.report_store import save_report as save_stored_report
 from app.services.skin_metrics import compute_all_conditions
 from model import SkinModelLoader
 from skin_regions import analyze_face_regions
@@ -128,6 +131,19 @@ class AnalysisResponse(BaseModel):
 
     overall_score: int = Field(ge=0, le=100)
     metrics: dict[str, MetricDetail]
+
+
+class ReportCreate(BaseModel):
+    """Payload for POST /api/reports (camelCase, matching the frontend service)."""
+    model_config = ConfigDict(extra="ignore")
+
+    heartRate: float = Field(ge=0, le=300)
+    bloodPressure: Optional[str] = None
+    oxygenLevel: Optional[float] = Field(default=None, ge=0, le=100)
+    respirationRate: Optional[float] = Field(default=None, ge=0, le=100)
+    healthScore: float = Field(ge=0, le=100)
+    riskLevel: str
+    stressLevel: Optional[str] = "Unknown"
 
 
 # ---------------------------------------------------------------------------
@@ -342,3 +358,40 @@ async def analyze_skin(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Unable to process this image",
         )
+
+
+# ---------------------------------------------------------------------------
+# Report history  (frontend: src/services/reportService.ts)
+# ---------------------------------------------------------------------------
+
+@app.get("/api/reports")
+def get_reports() -> list[dict]:
+    """Return stored health reports, newest first."""
+    try:
+        return list_stored_reports(supabase_client=supabase)
+    except Exception as store_err:
+        print(f"Error listing reports: {store_err}")
+        raise HTTPException(status_code=503, detail="Report store unavailable")
+
+
+@app.post("/api/reports", status_code=201)
+def create_report(report: ReportCreate) -> dict:
+    """Persist a health report and return the stored record (id + createdAt)."""
+    try:
+        return save_stored_report(report.model_dump(), supabase_client=supabase)
+    except Exception as store_err:
+        print(f"Error saving report: {store_err}")
+        raise HTTPException(status_code=503, detail="Report store unavailable")
+
+
+@app.delete("/api/reports/{report_id}")
+def remove_report(report_id: str) -> dict:
+    """Delete a report by id; 404 when the id does not exist."""
+    try:
+        deleted = delete_stored_report(report_id, supabase_client=supabase)
+    except Exception as store_err:
+        print(f"Error deleting report: {store_err}")
+        raise HTTPException(status_code=503, detail="Report store unavailable")
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Report not found")
+    return {"status": "deleted", "id": report_id}
