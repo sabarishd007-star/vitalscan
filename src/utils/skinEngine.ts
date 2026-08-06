@@ -454,8 +454,8 @@ function analyzePixels(
   };
 }
 
-function addNoise(base: number, noiseRange: number): number {
-  return base + (Math.random() - 0.5) * noiseRange;
+function addNoise(base: number, _noiseRange: number): number {
+  return base;
 }
 
 // ─── Main Analyze Routine ─────────────────────────────────────────────
@@ -654,89 +654,28 @@ export function analyzeSkinFromFrame(
   const adjDarkCircles = clamp(darkCircles + darkCirclesAdj, 0, 10);
   const adjDehydration = clamp(dehydration + (userWaterIntake < 1.5 ? 1.5 : 0), 0, 10);
 
-  // ─── User Concern Boosts ──────────────────────────────────────────────
-  // Blend camera reading with a minimum floor based on what user reported.
-  // This ensures selected concern is always meaningfully reflected in scores.
-  let concernAcne = acneLevel;
-  let concernBlackheads = blackheads;
-  let concernOiliness = adjOiliness;
-  let concernDryness = adjDryness;
-  let concernRedness = redness;
-  let concernDarkCircles = adjDarkCircles;
-  let concernPigmentation = pigmentation;
-  let concernMelasma = melasma;
-  let concernTanning = tanning;
-  let concernPores = poreVisibility;
-  let concernTexture = texture;
-  let concernDullness = dullness;
-  let concernAcneScars = acneScars;
-  let concernAging = aging;
-  let concernPuffiness = puffiness;
-  let concernHydration = adjHydration;
-  let concernDehydration = adjDehydration;
-  let concernMilia = milia;
-  let concernSunburn = sunburn;
-
-  const BOOST = 2.0; // how strongly we shift towards user-reported concern
-
-  if (userConcern === "acne") {
-    concernAcne = clamp(Math.max(concernAcne, acneLevel + BOOST), 0, 10);
-    concernBlackheads = clamp(Math.max(concernBlackheads, blackheads + 0.8), 0, 10);
-    concernPores = clamp(Math.max(concernPores, poreVisibility + 0.6), 0, 10);
-  } else if (userConcern === "blackheads") {
-    concernBlackheads = clamp(Math.max(concernBlackheads, blackheads + BOOST), 0, 10);
-    concernPores = clamp(Math.max(concernPores, poreVisibility + 1.0), 0, 10);
-    concernOiliness = clamp(Math.max(concernOiliness, adjOiliness + 0.6), 0, 10);
-  } else if (userConcern === "oily") {
-    concernOiliness = clamp(Math.max(concernOiliness, adjOiliness + BOOST), 0, 10);
-    concernPores = clamp(Math.max(concernPores, poreVisibility + 0.8), 0, 10);
-  } else if (userConcern === "dry") {
-    concernDryness = clamp(Math.max(concernDryness, adjDryness + BOOST), 0, 10);
-    concernHydration = clamp(Math.min(concernHydration, adjHydration - 1.0), 0, 10);
-    concernDehydration = clamp(Math.max(concernDehydration, adjDehydration + 1.2), 0, 10);
-  } else if (userConcern === "combination") {
-    concernOiliness = clamp(Math.max(concernOiliness, 4.5), 0, 10);
-    concernDryness = clamp(Math.max(concernDryness, 4.5), 0, 10);
-  } else if (userConcern === "sensitive") {
-    concernRedness = clamp(Math.max(concernRedness, redness + BOOST), 0, 10);
-  } else if (userConcern === "darkCircles") {
-    concernDarkCircles = clamp(Math.max(concernDarkCircles, adjDarkCircles + BOOST), 0, 10);
-  } else if (userConcern === "pigmentation") {
-    concernPigmentation = clamp(Math.max(concernPigmentation, pigmentation + BOOST), 0, 10);
-  } else if (userConcern === "melasma") {
-    concernMelasma = clamp(Math.max(concernMelasma, melasma + BOOST), 0, 10);
-    concernPigmentation = clamp(Math.max(concernPigmentation, pigmentation + 0.8), 0, 10);
-  } else if (userConcern === "tanning") {
-    concernTanning = clamp(Math.max(concernTanning, tanning + BOOST), 0, 10);
-    concernPigmentation = clamp(Math.max(concernPigmentation, pigmentation + 0.6), 0, 10);
-  } else if (userConcern === "enlargedPores") {
-    concernPores = clamp(Math.max(concernPores, poreVisibility + BOOST), 0, 10);
-    concernOiliness = clamp(Math.max(concernOiliness, adjOiliness + 0.6), 0, 10);
-  } else if (userConcern === "texture") {
-    concernTexture = clamp(Math.max(concernTexture, texture + BOOST), 0, 10);
-    concernPores = clamp(Math.max(concernPores, poreVisibility + 0.6), 0, 10);
-  } else if (userConcern === "dullness") {
-    concernDullness = clamp(Math.max(concernDullness, dullness + BOOST), 0, 10);
-    concernHydration = clamp(Math.min(concernHydration, adjHydration - 0.8), 0, 10);
-  } else if (userConcern === "acneScars") {
-    concernAcneScars = clamp(Math.max(concernAcneScars, acneScars + BOOST), 0, 10);
-    concernPigmentation = clamp(Math.max(concernPigmentation, pigmentation + 0.6), 0, 10);
-  } else if (userConcern === "aging") {
-    concernAging = clamp(Math.max(concernAging, aging + BOOST), 0, 10);
-    concernTexture = clamp(Math.max(concernTexture, texture + 0.6), 0, 10);
-  } else if (userConcern === "puffiness") {
-    concernPuffiness = clamp(Math.max(concernPuffiness, puffiness + BOOST), 0, 10);
-    concernDarkCircles = clamp(Math.max(concernDarkCircles, adjDarkCircles + 0.6), 0, 10);
-  } else if (userConcern === "dehydration") {
-    concernDehydration = clamp(Math.max(concernDehydration, adjDehydration + BOOST), 0, 10);
-    concernDryness = clamp(Math.max(concernDryness, adjDryness + 0.8), 0, 10);
-    concernHydration = clamp(Math.min(concernHydration, adjHydration - 1.0), 0, 10);
-  } else if (userConcern === "milia") {
-    concernMilia = clamp(Math.max(concernMilia, milia + BOOST), 0, 10);
-  } else if (userConcern === "sunburn") {
-    concernSunburn = clamp(Math.max(concernSunburn, sunburn + BOOST), 0, 10);
-    concernRedness = clamp(Math.max(concernRedness, redness + 0.8), 0, 10);
-  }
+  // ─── User Concern (display filter only) ─────────────────────────────────
+  // The selected concern is used to surface results in the UI, never to change
+  // the measured scores. Values below are the raw camera estimates.
+  const concernAcne = acneLevel;
+  const concernBlackheads = blackheads;
+  const concernOiliness = adjOiliness;
+  const concernDryness = adjDryness;
+  const concernRedness = redness;
+  const concernDarkCircles = adjDarkCircles;
+  const concernPigmentation = pigmentation;
+  const concernMelasma = melasma;
+  const concernTanning = tanning;
+  const concernPores = poreVisibility;
+  const concernTexture = texture;
+  const concernDullness = dullness;
+  const concernAcneScars = acneScars;
+  const concernAging = aging;
+  const concernPuffiness = puffiness;
+  const concernHydration = adjHydration;
+  const concernDehydration = adjDehydration;
+  const concernMilia = milia;
+  const concernSunburn = sunburn;
 
   // Skin type determination
   let skinType: SkinAnalysisResult["skinType"] = "Normal";

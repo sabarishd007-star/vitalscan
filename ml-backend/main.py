@@ -9,6 +9,7 @@ Thin FastAPI application layer.  All heavy CV/ML logic lives in:
     model.py                       — PyTorch SkinModelLoader
     skin_regions.py                — Face-Mesh localized region signals
 """
+import hashlib
 import os
 from pathlib import Path
 from typing import Optional, Dict, Any
@@ -42,11 +43,27 @@ from skin_regions import analyze_face_regions
 MAX_IMAGE_BYTES = 10 * 1024 * 1024
 ALLOWED_IMAGE_TYPES = {"image/jpeg", "image/png", "image/webp"}
 APP_ENV = os.getenv("APP_ENV", "development").lower()
+MODEL_VERSION = os.getenv("MODEL_VERSION", "unknown")
 COSMETIC_DISCLAIMER = (
     "This analysis is for informational cosmetic care only and does not constitute "
     "a clinical medical diagnosis. Consult a qualified clinician for a persistent, "
     "painful, or changing skin concern."
 )
+
+
+def compute_weights_sha256() -> Optional[str]:
+    """SHA-256 of the deployed weights file so clients can verify which model is live."""
+    weights_path = Path(__file__).parent / "weights" / "skin_model.pth"
+    if not weights_path.exists():
+        return None
+    digest = hashlib.sha256()
+    with open(weights_path, "rb") as fh:
+        for chunk in iter(lambda: fh.read(1 << 20), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+MODEL_SHA256 = compute_weights_sha256()
 
 # ---------------------------------------------------------------------------
 # Supabase
@@ -201,6 +218,10 @@ def read_root():
         "service": "VitalScan AI Skin API",
         "engine": "PyTorch + Heuristic Fallback",
         "mode": "Heuristic Mock" if model_loader.is_mock else "Trained Model",
+        "model_mode": "heuristic" if model_loader.is_mock else "loaded",
+        "model_sha256": MODEL_SHA256,
+        "model_version": MODEL_VERSION,
+        "production_model_validated": os.getenv("MODEL_VALIDATED", "false").lower() == "true",
     }
 
 
@@ -211,6 +232,8 @@ def health_check():
         "status": "healthy",
         "device": str(model_loader.device),
         "model_mode": "heuristic" if model_loader.is_mock else "loaded",
+        "model_sha256": MODEL_SHA256,
+        "model_version": MODEL_VERSION,
         "production_model_validated": os.getenv("MODEL_VALIDATED", "false").lower() == "true",
     }
 

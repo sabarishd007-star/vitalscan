@@ -251,6 +251,13 @@ export default function SkinReport() {
           ⚠️ <strong>Disclaimer:</strong> This report provides AI-estimated cosmetic skincare guidance based on visible facial features. It does not diagnose diseases or replace professional medical advice from a qualified dermatologist.
         </div>
 
+        {/* Low-confidence warning */}
+        {(result.analysisConfidence || 85) < 75 && (
+          <div className="bg-orange-50 border border-orange-300 rounded-xl p-4 mb-6 text-orange-800 text-sm">
+            ⚠️ <strong>Low-confidence estimate:</strong> The signal in this photo was weak or ambiguous, so the scores below are a rough estimate only. Retake the scan in even, bright lighting for a more reliable result.
+          </div>
+        )}
+
         {/* Auto-detected Concerns */}
         {result.detectedConcerns && result.detectedConcerns.length > 0 && (
           <div className="bg-white rounded-3xl shadow-lg p-6 mb-6">

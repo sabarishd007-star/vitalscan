@@ -2,8 +2,28 @@ import { analyzeSkinFromFrame } from "../utils/skinEngine";
 import type { SkinAnalysisResult } from "../utils/skinEngine";
 import { supabase } from "../supabase";
 
-const ML_BACKEND_URL = import.meta.env.VITE_ML_BACKEND_URL?.replace(/\/$/, "");
-const ALLOW_LOCAL_FALLBACK = import.meta.env.VITE_ALLOW_LOCAL_ANALYSIS_FALLBACK === "true";
+const DEFAULT_PRODUCTION_URL = "https://vitalscan-backend-production.up.railway.app";
+
+function isLocalhostUrl(url: string): boolean {
+  return /^https?:\/\/(localhost|127\.0\.0\.1|0\.0\.0\.0|\[::1\])(:\d+)?$/i.test(url);
+}
+
+function resolveBackendUrl(): string | null {
+  const configured = import.meta.env.VITE_ML_BACKEND_URL?.replace(/\/$/, "");
+  if (!configured) return null;
+  // A localhost backend is never valid in a deployed build. Point deployed
+  // clients at the production HTTPS origin instead of the user's machine.
+  if (import.meta.env.PROD && isLocalhostUrl(configured)) {
+    return DEFAULT_PRODUCTION_URL;
+  }
+  return configured;
+}
+
+const ML_BACKEND_URL = resolveBackendUrl();
+
+// Browser-side estimates must never silently replace a failed production analysis.
+const ALLOW_LOCAL_FALLBACK =
+  !import.meta.env.PROD && import.meta.env.VITE_ALLOW_LOCAL_ANALYSIS_FALLBACK === "true";
 
 /**
  * Utility to convert canvas to Blob (JPEG) wrapped in a Promise.

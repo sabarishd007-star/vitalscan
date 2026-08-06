@@ -1,5 +1,4 @@
 import os
-import random
 import torch
 import torch.nn as nn
 from torchvision import models, transforms
@@ -85,16 +84,21 @@ class SkinModelLoader:
                 outputs = self.model(img_tensor)
                 # Sigmoid to normalize outputs to [0, 1] range
                 scores = torch.sigmoid(outputs).squeeze(0).cpu().numpy()
-                
+
             results = {}
             for idx, concern in enumerate(CONCERNS):
                 # Scale model logits/sigmoid output to [0, 10] range
                 val = float(scores[idx]) * 10.0
                 results[concern] = round(val, 1)
-                
+
+            # Deterministic confidence from the model's own margin: how far each
+            # predicted probability is from the ambiguous 0.5 boundary.
+            certainty = float(np.mean(np.maximum(scores, 1.0 - scores))) * 100.0
+            confidence = int(max(50, min(95, certainty)))
+
             # Apply user parameter bias to output
             results = self._apply_lifestyle_adjustments(results, user_params)
-            return self._compile_response(results, confidence=92)
+            return self._compile_response(results, confidence=confidence)
             
         except Exception as e:
             print(f"ML inference exception: {e}. Falling back to heuristic prediction.")
@@ -148,35 +152,38 @@ class SkinModelLoader:
         # Glow
         glow_raw = max(0.0, min(10.0, (fh_lum + ck_lum) / 35.0))
         
-        # Base random normal variations for other concerns
+        # Base deterministic estimates for concerns not directly derivable from
+        # this simple region-average heuristic. Fixed mid-range values keep
+        # results reproducible; zone-masked CV (skin_metrics) adds real signal.
         results = {
-            "acneLevel": round(max(0.0, min(10.0, redness_raw * 0.7 + texture_raw * 0.3 + random.uniform(-0.5, 0.5))), 1),
-            "darkCircles": round(random.uniform(2.5, 5.5), 1),
+            "acneLevel": round(max(0.0, min(10.0, redness_raw * 0.7 + texture_raw * 0.3)), 1),
+            "darkCircles": round(4.0, 1),
             "oiliness": round(oiliness_raw, 1),
             "dryness": round(dryness_raw, 1),
             "redness": round(redness_raw, 1),
-            "poreVisibility": round(max(0.0, min(10.0, oiliness_raw * 0.8 + random.uniform(-0.4, 0.4))), 1),
-            "pigmentation": round(random.uniform(3.0, 6.0), 1),
+            "poreVisibility": round(max(0.0, min(10.0, oiliness_raw * 0.8)), 1),
+            "pigmentation": round(4.5, 1),
             "texture": round(texture_raw, 1),
             "glowScore": round(glow_raw, 1),
             "hydration": round(hydration_raw, 1),
-            "blackheads": round(max(0.0, min(10.0, oiliness_raw * 0.6 + random.uniform(-0.5, 0.5))), 1),
-            "melasma": round(random.uniform(1.0, 3.5), 1),
-            "tanning": round(random.uniform(2.0, 5.0), 1),
+            "blackheads": round(max(0.0, min(10.0, oiliness_raw * 0.6)), 1),
+            "melasma": round(2.0, 1),
+            "tanning": round(3.5, 1),
             "dullness": round(max(0.0, min(10.0, 10.0 - glow_raw)), 1),
-            "acneScars": round(random.uniform(1.5, 4.0), 1),
-            "aging": round(random.uniform(2.0, 4.5), 1),
-            "puffiness": round(random.uniform(2.0, 4.8), 1),
-            "dehydration": round(max(0.0, min(10.0, dryness_raw * 0.9 + random.uniform(-0.3, 0.3))), 1),
-            "milia": round(random.uniform(1.0, 3.0), 1),
-            "sunburn": round(max(0.0, min(10.0, redness_raw * 0.9 + random.uniform(-0.3, 0.3))), 1)
+            "acneScars": round(2.5, 1),
+            "aging": round(3.0, 1),
+            "puffiness": round(3.0, 1),
+            "dehydration": round(max(0.0, min(10.0, dryness_raw * 0.9)), 1),
+            "milia": round(2.0, 1),
+            "sunburn": round(max(0.0, min(10.0, redness_raw * 0.9)), 1)
         }
-        
+
         # Apply lifestyle and target concern adjustments
         results = self._apply_lifestyle_adjustments(results, user_params)
-        
-        # Determine average confidence
-        confidence = int(random.uniform(82, 89))
+
+        # Deterministic confidence from measured cheek contrast (0 = flat, 1 = high texture)
+        signal = (sum(ck_stddev) / 3.0) / 20.0
+        confidence = int(max(70, min(90, 80 + signal * 5)))
         return self._compile_response(results, confidence)
 
     def _apply_lifestyle_adjustments(self, results: dict, params: dict) -> dict:
@@ -186,8 +193,7 @@ class SkinModelLoader:
         water = float(params.get("waterIntake", 2.5))
         sleep = float(params.get("sleepHours", 7.0))
         stress = int(params.get("stressLevel", 4))
-        concern = params.get("skinConcern", "none")
-        
+
         # Hydration and Dehydration
         if water < 1.5:
             results["hydration"] = max(0.0, results["hydration"] - 1.5)
@@ -196,64 +202,19 @@ class SkinModelLoader:
         elif water > 2.5:
             results["hydration"] = min(10.0, results["hydration"] + 1.0)
             results["dehydration"] = max(0.0, results["dehydration"] - 1.0)
-            
+
         # Dark circles & Puffiness
         if sleep < 6:
             results["darkCircles"] = min(10.0, results["darkCircles"] + 2.0)
             results["puffiness"] = min(10.0, results["puffiness"] + 1.5)
         elif sleep > 8:
             results["darkCircles"] = max(0.0, results["darkCircles"] - 0.8)
-            
+
         # Stress-induced oiliness & acne
         if stress > 7:
             results["oiliness"] = min(10.0, results["oiliness"] + 1.2)
             results["acneLevel"] = min(10.0, results["acneLevel"] + 0.8)
-            
-        # Concern-based boosts
-        BOOST = 2.0
-        if concern == "acne":
-            results["acneLevel"] = min(10.0, max(results["acneLevel"], results["acneLevel"] + BOOST))
-            results["blackheads"] = min(10.0, max(results["blackheads"], results["blackheads"] + 0.8))
-        elif concern == "blackheads":
-            results["blackheads"] = min(10.0, max(results["blackheads"], results["blackheads"] + BOOST))
-            results["poreVisibility"] = min(10.0, max(results["poreVisibility"], results["poreVisibility"] + 1.0))
-        elif concern == "oily":
-            results["oiliness"] = min(10.0, max(results["oiliness"], results["oiliness"] + BOOST))
-        elif concern == "dry":
-            results["dryness"] = min(10.0, max(results["dryness"], results["dryness"] + BOOST))
-            results["hydration"] = max(0.0, results["hydration"] - 1.0)
-        elif concern == "sensitive":
-            results["redness"] = min(10.0, max(results["redness"], results["redness"] + BOOST))
-        elif concern == "darkCircles":
-            results["darkCircles"] = min(10.0, max(results["darkCircles"], results["darkCircles"] + BOOST))
-        elif concern == "pigmentation":
-            results["pigmentation"] = min(10.0, max(results["pigmentation"], results["pigmentation"] + BOOST))
-        elif concern == "melasma":
-            results["melasma"] = min(10.0, max(results["melasma"], results["melasma"] + BOOST))
-            results["pigmentation"] = min(10.0, max(results["pigmentation"], results["pigmentation"] + 0.8))
-        elif concern == "tanning":
-            results["tanning"] = min(10.0, max(results["tanning"], results["tanning"] + BOOST))
-        elif concern == "enlargedPores":
-            results["poreVisibility"] = min(10.0, max(results["poreVisibility"], results["poreVisibility"] + BOOST))
-        elif concern == "texture":
-            results["texture"] = min(10.0, max(results["texture"], results["texture"] + BOOST))
-        elif concern == "dullness":
-            results["dullness"] = min(10.0, max(results["dullness"], results["dullness"] + BOOST))
-            results["glowScore"] = max(0.0, results["glowScore"] - 1.2)
-        elif concern == "acneScars":
-            results["acneScars"] = min(10.0, max(results["acneScars"], results["acneScars"] + BOOST))
-        elif concern == "aging":
-            results["aging"] = min(10.0, max(results["aging"], results["aging"] + BOOST))
-        elif concern == "puffiness":
-            results["puffiness"] = min(10.0, max(results["puffiness"], results["puffiness"] + BOOST))
-        elif concern == "dehydration":
-            results["dehydration"] = min(10.0, max(results["dehydration"], results["dehydration"] + BOOST))
-            results["hydration"] = max(0.0, results["hydration"] - 1.5)
-        elif concern == "milia":
-            results["milia"] = min(10.0, max(results["milia"], results["milia"] + BOOST))
-        elif concern == "sunburn":
-            results["sunburn"] = min(10.0, max(results["sunburn"], results["sunburn"] + BOOST))
-            
+
         return results
 
     def _compile_response(self, results: dict, confidence: int) -> dict:
