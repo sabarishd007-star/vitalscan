@@ -2,3 +2,7 @@
 dist_dataset/
 dist_eval/
 dist_eval2/
+
+# Real-face robustness corpus (download_real_faces.py re-fetches these;
+# manifest.json IS committed, the photographs themselves are not redistributed)
+real_faces/images/

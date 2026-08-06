@@ -1,0 +1,1187 @@
+{
+  "generated_at": "2026-08-06T21:58:15",
+  "weights_path": "weights/skin_model.pth",
+  "weights_sha256": "42a6bac26c28ab0e187ef92180f176938248debb2ef633fe9cd8d7b6609941eb",
+  "model_loaded": true,
+  "corpus_dir": "real_faces\\images",
+  "num_images": 17,
+  "num_detected": 16,
+  "detection_rate": 0.9412,
+  "perturbations": [
+    "bright+15",
+    "bright-15",
+    "jpeg-q40"
+  ],
+  "robustness": {
+    "all_scores_finite": true,
+    "all_scores_in_0_10": true,
+    "min_score": 0.0,
+    "max_score": 10.0
+  },
+  "agreement": {
+    "overall": {
+      "mean_mae": 3.5574,
+      "mean_auc": 0.6139
+    },
+    "conditions": {
+      "acneLevel": {
+        "mae": 3.8388,
+        "auc": null,
+        "n": 16,
+        "passes_max_mae_1.5": false
+      },
+      "darkCircles": {
+        "mae": 7.8864,
+        "auc": 0.2667,
+        "n": 16,
+        "passes_max_mae_1.5": false
+      },
+      "oiliness": {
+        "mae": 3.6072,
+        "auc": 0.6182,
+        "n": 16,
+        "passes_max_mae_1.5": false
+      },
+      "dryness": {
+        "mae": 3.5516,
+        "auc": 0.8413,
+        "n": 16,
+        "passes_max_mae_1.5": false
+      },
+      "redness": {
+        "mae": 1.874,
+        "auc": 0.6364,
+        "n": 16,
+        "passes_max_mae_1.5": false
+      },
+      "poreVisibility": {
+        "mae": 1.1015,
+        "auc": null,
+        "n": 16,
+        "passes_max_mae_1.5": true
+      },
+      "pigmentation": {
+        "mae": 7.6358,
+        "auc": null,
+        "n": 16,
+        "passes_max_mae_1.5": false
+      },
+      "texture": {
+        "mae": 0.8323,
+        "auc": null,
+        "n": 16,
+        "passes_max_mae_1.5": true
+      },
+      "glowScore": {
+        "mae": 4.7534,
+        "auc": 0.4643,
+        "n": 16,
+        "passes_max_mae_1.5": false
+      },
+      "hydration": {
+        "mae": 3.3658,
+        "auc": 0.7937,
+        "n": 16,
+        "passes_max_mae_1.5": false
+      },
+      "blackheads": {
+        "mae": 3.0265,
+        "auc": 0.4,
+        "n": 16,
+        "passes_max_mae_1.5": false
+      },
+      "melasma": {
+        "mae": 5.5244,
+        "auc": null,
+        "n": 16,
+        "passes_max_mae_1.5": false
+      },
+      "tanning": {
+        "mae": 5.0933,
+        "auc": 0.2,
+        "n": 16,
+        "passes_max_mae_1.5": false
+      },
+      "dullness": {
+        "mae": 4.1214,
+        "auc": 0.6429,
+        "n": 16,
+        "passes_max_mae_1.5": false
+      },
+      "acneScars": {
+        "mae": 2.6279,
+        "auc": null,
+        "n": 16,
+        "passes_max_mae_1.5": false
+      },
+      "aging": {
+        "mae": 4.0972,
+        "auc": 0.9333,
+        "n": 16,
+        "passes_max_mae_1.5": false
+      },
+      "puffiness": {
+        "mae": 0.7477,
+        "auc": null,
+        "n": 16,
+        "passes_max_mae_1.5": true
+      },
+      "dehydration": {
+        "mae": 3.7116,
+        "auc": 0.6364,
+        "n": 16,
+        "passes_max_mae_1.5": false
+      },
+      "milia": {
+        "mae": 0.5888,
+        "auc": null,
+        "n": 16,
+        "passes_max_mae_1.5": true
+      },
+      "sunburn": {
+        "mae": 3.1619,
+        "auc": 0.9333,
+        "n": 16,
+        "passes_max_mae_1.5": false
+      }
+    }
+  },
+  "stability": {
+    "acneLevel": {
+      "model_mean_abs_delta": 0.5907,
+      "cv_mean_abs_delta": 0.0,
+      "perturbation_samples": 48
+    },
+    "darkCircles": {
+      "model_mean_abs_delta": 0.3431,
+      "cv_mean_abs_delta": 0.1417,
+      "perturbation_samples": 48
+    },
+    "oiliness": {
+      "model_mean_abs_delta": 0.4821,
+      "cv_mean_abs_delta": 1.7125,
+      "perturbation_samples": 48
+    },
+    "dryness": {
+      "model_mean_abs_delta": 0.3153,
+      "cv_mean_abs_delta": 1.3792,
+      "perturbation_samples": 48
+    },
+    "redness": {
+      "model_mean_abs_delta": 0.3552,
+      "cv_mean_abs_delta": 0.5479,
+      "perturbation_samples": 48
+    },
+    "poreVisibility": {
+      "model_mean_abs_delta": 0.2421,
+      "cv_mean_abs_delta": 0.3208,
+      "perturbation_samples": 48
+    },
+    "pigmentation": {
+      "model_mean_abs_delta": 0.4508,
+      "cv_mean_abs_delta": 0.2896,
+      "perturbation_samples": 48
+    },
+    "texture": {
+      "model_mean_abs_delta": 0.1697,
+      "cv_mean_abs_delta": 0.3208,
+      "perturbation_samples": 48
+    },
+    "glowScore": {
+      "model_mean_abs_delta": 0.3853,
+      "cv_mean_abs_delta": 0.675,
+      "perturbation_samples": 48
+    },
+    "hydration": {
+      "model_mean_abs_delta": 0.3905,
+      "cv_mean_abs_delta": 1.3792,
+      "perturbation_samples": 48
+    },
+    "blackheads": {
+      "model_mean_abs_delta": 0.3371,
+      "cv_mean_abs_delta": 0.6729,
+      "perturbation_samples": 48
+    },
+    "melasma": {
+      "model_mean_abs_delta": 0.4686,
+      "cv_mean_abs_delta": 0.2104,
+      "perturbation_samples": 48
+    },
+    "tanning": {
+      "model_mean_abs_delta": 0.4873,
+      "cv_mean_abs_delta": 0.6,
+      "perturbation_samples": 48
+    },
+    "dullness": {
+      "model_mean_abs_delta": 0.4378,
+      "cv_mean_abs_delta": 0.675,
+      "perturbation_samples": 48
+    },
+    "acneScars": {
+      "model_mean_abs_delta": 0.3575,
+      "cv_mean_abs_delta": 0.0,
+      "perturbation_samples": 48
+    },
+    "aging": {
+      "model_mean_abs_delta": 0.3832,
+      "cv_mean_abs_delta": 0.1167,
+      "perturbation_samples": 48
+    },
+    "puffiness": {
+      "model_mean_abs_delta": 0.2074,
+      "cv_mean_abs_delta": 0.0,
+      "perturbation_samples": 48
+    },
+    "dehydration": {
+      "model_mean_abs_delta": 0.3778,
+      "cv_mean_abs_delta": 1.5188,
+      "perturbation_samples": 48
+    },
+    "milia": {
+      "model_mean_abs_delta": 0.2541,
+      "cv_mean_abs_delta": 0.1271,
+      "perturbation_samples": 48
+    },
+    "sunburn": {
+      "model_mean_abs_delta": 0.4314,
+      "cv_mean_abs_delta": 0.5125,
+      "perturbation_samples": 48
+    }
+  },
+  "tone_spread": {
+    "bins": {
+      "dark (L*<120)": 4,
+      "medium (120-160)": 11,
+      "light (L*>160)": 1
+    },
+    "images": [
+      {
+        "filename": "dlib_2007_007763.jpg",
+        "mean_lightness": 108.7
+      },
+      {
+        "filename": "dlib_2008_001009.jpg",
+        "mean_lightness": 105.9
+      },
+      {
+        "filename": "dlib_2008_001322.jpg",
+        "mean_lightness": 192.9
+      },
+      {
+        "filename": "dlib_2008_002079.jpg",
+        "mean_lightness": 154.5
+      },
+      {
+        "filename": "dlib_2008_002470.jpg",
+        "mean_lightness": 97.6
+      },
+      {
+        "filename": "dlib_2008_002506.jpg",
+        "mean_lightness": 136.1
+      },
+      {
+        "filename": "dlib_2008_004176.jpg",
+        "mean_lightness": 124.8
+      },
+      {
+        "filename": "dlib_2008_007676.jpg",
+        "mean_lightness": 96.5
+      },
+      {
+        "filename": "dlib_2009_004587.jpg",
+        "mean_lightness": 135.3
+      },
+      {
+        "filename": "dlib_bald_guys.jpg",
+        "mean_lightness": 139.9
+      },
+      {
+        "filename": "dlib_Tom_Cruise_avp_2014_4.jpg",
+        "mean_lightness": 129.7
+      },
+      {
+        "filename": "facerec_biden.jpg",
+        "mean_lightness": 126.9
+      },
+      {
+        "filename": "facerec_lin_manuel_miranda.png",
+        "mean_lightness": 127.7
+      },
+      {
+        "filename": "facerec_obama.jpg",
+        "mean_lightness": 144.3
+      },
+      {
+        "filename": "facerec_obama2.jpg",
+        "mean_lightness": 134.0
+      },
+      {
+        "filename": "opencv_lena.jpg",
+        "mean_lightness": 132.9
+      }
+    ]
+  },
+  "cv_saturation_pct": {
+    "acneLevel": 100.0,
+    "darkCircles": 93.8,
+    "oiliness": 18.8,
+    "dryness": 0.0,
+    "redness": 12.5,
+    "poreVisibility": 81.2,
+    "pigmentation": 0.0,
+    "texture": 81.2,
+    "glowScore": 37.5,
+    "hydration": 0.0,
+    "blackheads": 50.0,
+    "melasma": 0.0,
+    "tanning": 0.0,
+    "dullness": 0.0,
+    "acneScars": 0.0,
+    "aging": 68.8,
+    "puffiness": 100.0,
+    "dehydration": 0.0,
+    "milia": 0.0,
+    "sunburn": 31.2
+  },
+  "puffiness": {
+    "model_vs_cv_mae": 0.7477,
+    "cv_range": [
+      10.0,
+      10.0
+    ],
+    "model_range": [
+      7.66,
+      9.82
+    ],
+    "cv_saturation_pct": 100.0,
+    "note": "Puffiness is the weakest distilled condition on synthetic data (MAE ~1.6 vs 1.5 gate). On this real corpus its CV reference saturates (100% of faces peg at 10), so the low model-vs-CV MAE here is not evidence of real discrimination \u2014 it only shows the model tracks the saturated reference direction. Real puffiness discrimination is NOT validated by this corpus."
+  },
+  "limitations": "No dermatological ground truth: CV labels are the reference the distilled model must reproduce. The CV metric clamp ranges were fit to smooth synthetic renders; on real photos several conditions saturate at 10 (see cv_saturation_pct), so real-face model-vs-CV agreement is only meaningful for unsaturated conditions. Corpus is 17 hand-picked public sample images, skewing light (see tone_spread). Synthetic distillation eval remains the release gate.",
+  "per_image": [
+    {
+      "filename": "dlib_2007_007763.jpg",
+      "detected": true,
+      "detection_scope": "crop",
+      "mean_lightness": 108.7,
+      "primary_skin_type": "Dry / Normal Skin",
+      "cv_labels": [
+        10.0,
+        10.0,
+        0.0,
+        8.5,
+        5.9,
+        10.0,
+        0.2,
+        10.0,
+        6.3,
+        1.5,
+        6.0,
+        0.2,
+        3.6,
+        3.7,
+        8.0,
+        10.0,
+        10.0,
+        9.4,
+        4.0,
+        7.1
+      ],
+      "preds": [
+        3.6039,
+        2.2659,
+        5.9999,
+        3.4643,
+        3.7767,
+        8.2741,
+        5.504,
+        8.4217,
+        2.7298,
+        6.5192,
+        7.1297,
+        4.2547,
+        6.5873,
+        6.4511,
+        3.0707,
+        6.2846,
+        7.658,
+        3.9075,
+        4.7719,
+        3.3221
+      ]
+    },
+    {
+      "filename": "dlib_2008_001009.jpg",
+      "detected": true,
+      "detection_scope": "crop",
+      "mean_lightness": 105.9,
+      "primary_skin_type": "Dry / Normal Skin",
+      "cv_labels": [
+        10.0,
+        10.0,
+        0.0,
+        8.5,
+        7.9,
+        10.0,
+        0.0,
+        10.0,
+        5.6,
+        1.5,
+        10.0,
+        0.0,
+        7.7,
+        4.4,
+        8.0,
+        10.0,
+        10.0,
+        9.4,
+        4.0,
+        9.5
+      ],
+      "preds": [
+        6.969,
+        1.143,
+        5.3216,
+        2.8709,
+        4.8115,
+        9.0327,
+        7.7999,
+        9.3446,
+        3.7648,
+        6.4964,
+        8.0494,
+        5.3753,
+        5.1656,
+        6.1504,
+        5.5018,
+        4.7655,
+        8.7586,
+        3.0574,
+        4.0748,
+        3.6698
+      ]
+    },
+    {
+      "filename": "dlib_2008_001322.jpg",
+      "detected": true,
+      "detection_scope": "crop",
+      "mean_lightness": 192.9,
+      "primary_skin_type": "Oily Skin",
+      "cv_labels": [
+        10.0,
+        10.0,
+        10.0,
+        0.5,
+        5.6,
+        10.0,
+        1.5,
+        10.0,
+        10.0,
+        9.5,
+        10.0,
+        1.1,
+        0.0,
+        0.0,
+        8.0,
+        10.0,
+        10.0,
+        0.6,
+        4.0,
+        6.7
+      ],
+      "preds": [
+        8.2839,
+        0.8049,
+        5.7628,
+        2.1141,
+        4.2936,
+        9.5539,
+        9.5654,
+        9.5354,
+        3.1034,
+        8.5169,
+        8.8974,
+        8.4927,
+        5.2353,
+        4.8532,
+        7.2151,
+        6.1431,
+        9.0444,
+        2.0294,
+        3.8918,
+        7.5282
+      ]
+    },
+    {
+      "filename": "dlib_2008_002079.jpg",
+      "detected": true,
+      "detection_scope": "crop",
+      "mean_lightness": 154.5,
+      "primary_skin_type": "Dry / Normal Skin",
+      "cv_labels": [
+        10.0,
+        10.0,
+        3.7,
+        4.8,
+        5.3,
+        10.0,
+        0.0,
+        10.0,
+        10.0,
+        5.2,
+        10.0,
+        0.0,
+        0.0,
+        0.0,
+        8.0,
+        10.0,
+        10.0,
+        5.3,
+        4.0,
+        6.4
+      ],
+      "preds": [
+        4.516,
+        1.0348,
+        5.5549,
+        2.0408,
+        4.3625,
+        9.0156,
+        7.7141,
+        9.4207,
+        3.9692,
+        7.2666,
+        7.8791,
+        5.38,
+        4.4945,
+        5.9869,
+        4.741,
+        5.4727,
+        9.3384,
+        2.4675,
+        3.5987,
+        4.3373
+      ]
+    },
+    {
+      "filename": "dlib_2008_002470.jpg",
+      "detected": true,
+      "detection_scope": "crop",
+      "mean_lightness": 97.6,
+      "primary_skin_type": "Dry / Normal Skin",
+      "cv_labels": [
+        10.0,
+        10.0,
+        0.0,
+        8.5,
+        4.4,
+        10.0,
+        0.0,
+        10.0,
+        9.1,
+        1.5,
+        10.0,
+        0.0,
+        0.4,
+        0.9,
+        8.0,
+        10.0,
+        10.0,
+        9.4,
+        4.0,
+        5.3
+      ],
+      "preds": [
+        4.2475,
+        0.6266,
+        3.275,
+        4.552,
+        5.6497,
+        8.0002,
+        7.4283,
+        8.9494,
+        1.6675,
+        4.8267,
+        8.4793,
+        5.5517,
+        7.2988,
+        7.6828,
+        3.9571,
+        4.9172,
+        9.5171,
+        4.9443,
+        3.8453,
+        4.5091
+      ]
+    },
+    {
+      "filename": "dlib_2008_002506.jpg",
+      "detected": true,
+      "detection_scope": "crop",
+      "mean_lightness": 136.1,
+      "primary_skin_type": "Dry / Normal Skin",
+      "cv_labels": [
+        10.0,
+        10.0,
+        0.0,
+        8.5,
+        5.0,
+        10.0,
+        0.8,
+        10.0,
+        10.0,
+        1.5,
+        10.0,
+        0.6,
+        0.0,
+        0.0,
+        8.0,
+        10.0,
+        10.0,
+        9.4,
+        4.0,
+        6.0
+      ],
+      "preds": [
+        3.7015,
+        2.5792,
+        5.1364,
+        2.8415,
+        4.6725,
+        9.0132,
+        6.9388,
+        9.4322,
+        4.8008,
+        6.4158,
+        7.4182,
+        5.1545,
+        4.278,
+        5.0982,
+        3.9253,
+        5.3391,
+        8.7411,
+        3.721,
+        4.7383,
+        4.0193
+      ]
+    },
+    {
+      "filename": "dlib_2008_004176.jpg",
+      "detected": true,
+      "detection_scope": "crop",
+      "mean_lightness": 124.8,
+      "primary_skin_type": "Dry / Normal Skin",
+      "cv_labels": [
+        10.0,
+        10.0,
+        0.0,
+        8.5,
+        8.3,
+        10.0,
+        0.0,
+        10.0,
+        6.6,
+        1.5,
+        10.0,
+        0.0,
+        0.0,
+        3.4,
+        8.0,
+        10.0,
+        10.0,
+        9.4,
+        4.0,
+        10.0
+      ],
+      "preds": [
+        8.9832,
+        1.8818,
+        5.7259,
+        3.7571,
+        6.0788,
+        8.8143,
+        8.998,
+        9.1847,
+        2.7,
+        6.3723,
+        8.6029,
+        7.5771,
+        6.5857,
+        6.1211,
+        6.3135,
+        6.3393,
+        9.8069,
+        3.925,
+        4.8046,
+        7.1225
+      ]
+    },
+    {
+      "filename": "dlib_2008_007676.jpg",
+      "detected": true,
+      "detection_scope": "crop",
+      "mean_lightness": 96.5,
+      "primary_skin_type": "Oily Skin",
+      "cv_labels": [
+        10.0,
+        10.0,
+        10.0,
+        0.5,
+        5.7,
+        10.0,
+        0.0,
+        10.0,
+        10.0,
+        9.5,
+        8.0,
+        0.0,
+        0.0,
+        0.0,
+        8.0,
+        10.0,
+        10.0,
+        0.6,
+        4.0,
+        6.8
+      ],
+      "preds": [
+        8.9318,
+        1.4044,
+        6.2749,
+        2.6663,
+        5.6524,
+        9.1995,
+        9.4247,
+        9.2411,
+        1.2669,
+        6.9745,
+        9.47,
+        5.9886,
+        6.4291,
+        7.5569,
+        6.9338,
+        5.049,
+        9.8077,
+        2.7355,
+        4.177,
+        4.7419
+      ]
+    },
+    {
+      "filename": "dlib_2009_004587.jpg",
+      "detected": true,
+      "detection_scope": "crop",
+      "mean_lightness": 135.3,
+      "primary_skin_type": "Dry / Normal Skin",
+      "cv_labels": [
+        10.0,
+        10.0,
+        0.9,
+        7.6,
+        4.6,
+        10.0,
+        0.0,
+        10.0,
+        6.4,
+        2.4,
+        10.0,
+        0.0,
+        0.9,
+        3.6,
+        8.0,
+        10.0,
+        10.0,
+        8.4,
+        4.0,
+        5.5
+      ],
+      "preds": [
+        4.623,
+        3.5837,
+        4.4548,
+        3.5606,
+        4.5496,
+        8.2625,
+        6.1189,
+        9.2283,
+        4.6283,
+        5.9184,
+        6.631,
+        5.0206,
+        4.6013,
+        5.141,
+        4.1831,
+        4.1557,
+        7.6946,
+        3.8631,
+        3.3583,
+        4.7919
+      ]
+    },
+    {
+      "filename": "dlib_bald_guys.jpg",
+      "detected": true,
+      "detection_scope": "crop",
+      "mean_lightness": 139.9,
+      "primary_skin_type": "Dry / Normal Skin",
+      "cv_labels": [
+        10.0,
+        10.0,
+        0.0,
+        8.5,
+        4.1,
+        9.4,
+        0.4,
+        9.4,
+        4.7,
+        1.5,
+        4.4,
+        0.3,
+        2.9,
+        5.3,
+        8.0,
+        9.1,
+        10.0,
+        9.4,
+        3.8,
+        4.9
+      ],
+      "preds": [
+        3.9019,
+        1.7118,
+        4.7334,
+        2.3503,
+        4.8864,
+        9.3666,
+        6.9752,
+        9.6174,
+        3.6156,
+        7.3395,
+        8.1473,
+        5.4662,
+        6.8614,
+        6.3002,
+        5.0501,
+        5.8021,
+        9.6487,
+        3.2394,
+        4.5154,
+        2.8944
+      ]
+    },
+    {
+      "filename": "dlib_Tom_Cruise_avp_2014_4.jpg",
+      "detected": true,
+      "detection_scope": "crop",
+      "mean_lightness": 129.7,
+      "primary_skin_type": "Dry / Normal Skin",
+      "cv_labels": [
+        10.0,
+        10.0,
+        2.1,
+        6.4,
+        9.3,
+        9.3,
+        1.4,
+        9.3,
+        8.4,
+        3.6,
+        3.0,
+        1.0,
+        0.0,
+        1.6,
+        8.0,
+        9.8,
+        10.0,
+        7.0,
+        3.7,
+        10.0
+      ],
+      "preds": [
+        5.457,
+        2.6106,
+        4.6591,
+        2.2813,
+        5.5098,
+        9.2606,
+        8.5658,
+        9.5365,
+        2.7716,
+        6.9266,
+        8.9375,
+        6.4457,
+        5.8272,
+        6.3008,
+        5.3343,
+        6.0127,
+        9.7676,
+        2.4819,
+        4.8687,
+        4.4728
+      ]
+    },
+    {
+      "filename": "facerec_biden.jpg",
+      "detected": true,
+      "detection_scope": "crop",
+      "mean_lightness": 126.9,
+      "primary_skin_type": "Dry / Normal Skin",
+      "cv_labels": [
+        10.0,
+        10.0,
+        0.0,
+        8.5,
+        9.1,
+        5.6,
+        0.2,
+        5.6,
+        3.7,
+        1.5,
+        2.4,
+        0.2,
+        4.5,
+        6.3,
+        8.0,
+        4.2,
+        10.0,
+        9.4,
+        2.2,
+        10.0
+      ],
+      "preds": [
+        8.0443,
+        1.1282,
+        3.4886,
+        4.0962,
+        6.1303,
+        9.1837,
+        9.2865,
+        9.5763,
+        2.5249,
+        6.1645,
+        8.9421,
+        6.5719,
+        7.6024,
+        7.3586,
+        6.3802,
+        4.7076,
+        9.5429,
+        5.7086,
+        4.8282,
+        4.2868
+      ]
+    },
+    {
+      "filename": "facerec_lin_manuel_miranda.png",
+      "detected": true,
+      "detection_scope": "crop",
+      "mean_lightness": 127.7,
+      "primary_skin_type": "Oily Skin",
+      "cv_labels": [
+        10.0,
+        10.0,
+        5.1,
+        3.4,
+        4.8,
+        10.0,
+        0.0,
+        10.0,
+        10.0,
+        6.6,
+        2.9,
+        0.0,
+        0.0,
+        0.0,
+        8.0,
+        9.3,
+        10.0,
+        3.7,
+        4.0,
+        5.8
+      ],
+      "preds": [
+        6.4766,
+        1.2528,
+        4.6541,
+        2.4533,
+        4.0757,
+        9.1183,
+        8.6119,
+        9.6465,
+        3.3846,
+        7.0615,
+        8.3479,
+        5.5209,
+        5.2433,
+        5.6465,
+        5.6627,
+        5.8056,
+        9.708,
+        3.1287,
+        3.7479,
+        3.4192
+      ]
+    },
+    {
+      "filename": "facerec_obama.jpg",
+      "detected": true,
+      "detection_scope": "crop",
+      "mean_lightness": 144.3,
+      "primary_skin_type": "Oily Skin",
+      "cv_labels": [
+        10.0,
+        10.0,
+        5.7,
+        2.8,
+        7.7,
+        10.0,
+        0.7,
+        10.0,
+        5.8,
+        7.2,
+        3.6,
+        0.5,
+        0.0,
+        4.2,
+        8.0,
+        10.0,
+        10.0,
+        3.1,
+        4.0,
+        9.2
+      ],
+      "preds": [
+        5.323,
+        1.3243,
+        5.3548,
+        1.9049,
+        4.6279,
+        9.4478,
+        8.2996,
+        9.6683,
+        2.3578,
+        7.7806,
+        8.3062,
+        4.7775,
+        6.7478,
+        6.8732,
+        4.857,
+        5.0215,
+        9.4637,
+        3.3946,
+        3.9989,
+        2.1089
+      ]
+    },
+    {
+      "filename": "facerec_obama2.jpg",
+      "detected": true,
+      "detection_scope": "crop",
+      "mean_lightness": 134.0,
+      "primary_skin_type": "Dry / Normal Skin",
+      "cv_labels": [
+        10.0,
+        3.3,
+        3.8,
+        4.7,
+        10.0,
+        10.0,
+        1.3,
+        10.0,
+        7.1,
+        5.3,
+        3.3,
+        1.0,
+        0.0,
+        2.9,
+        8.0,
+        9.8,
+        10.0,
+        5.2,
+        4.0,
+        10.0
+      ],
+      "preds": [
+        7.4728,
+        1.9211,
+        5.7121,
+        2.7992,
+        5.6283,
+        8.9381,
+        9.4244,
+        9.3028,
+        1.9638,
+        6.9687,
+        8.3539,
+        5.9151,
+        7.0512,
+        7.4958,
+        6.7693,
+        5.3833,
+        9.7213,
+        3.0716,
+        3.7737,
+        4.179
+      ]
+    },
+    {
+      "filename": "opencv_lena.jpg",
+      "detected": true,
+      "detection_scope": "crop",
+      "mean_lightness": 132.9,
+      "primary_skin_type": "Oily Skin",
+      "cv_labels": [
+        10.0,
+        10.0,
+        10.0,
+        0.5,
+        10.0,
+        10.0,
+        1.7,
+        10.0,
+        10.0,
+        9.5,
+        10.0,
+        1.3,
+        0.0,
+        0.0,
+        8.0,
+        10.0,
+        10.0,
+        0.6,
+        4.0,
+        10.0
+      ],
+      "preds": [
+        8.0433,
+        1.8442,
+        4.6001,
+        3.317,
+        7.0833,
+        9.362,
+        9.7172,
+        9.738,
+        2.396,
+        4.4133,
+        9.6538,
+        7.0971,
+        6.4157,
+        7.2264,
+        6.0583,
+        6.4612,
+        9.8178,
+        4.2414,
+        3.4433,
+        8.8623
+      ]
+    },
+    {
+      "filename": "opencv_messi5.jpg",
+      "detected": false,
+      "detection_scope": null,
+      "mean_lightness": null,
+      "primary_skin_type": null,
+      "cv_labels": null,
+      "preds": null
+    }
+  ]
+}

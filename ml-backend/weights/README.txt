@@ -28,6 +28,37 @@ procedurally generated. A real, human-labelled face dataset (e.g. FFHQ + ISIC/AC
 is still required before `MODEL_VALIDATED=true` should be considered for production.
 Do not present the 19/20 figure as medical accuracy.
 
+## Real-face robustness check (Phase A, `validate_real.py`)
+
+A small real-photo corpus (17 sample faces from dlib / OpenCV / face_recognition,
+fetched by `download_real_faces.py`, images gitignored) runs the FULL production
+pipeline end-to-end: decode -> face crop -> CLAHE -> bilateral -> FaceMesh ->
+zone-masked CV metrics -> distilled model. See `real_eval_result.json` for the raw
+output. Findings (run with the committed weights):
+
+  detection   : 16/17 faces produced FaceMesh landmarks on the crop (messi5.jpg
+                failed; no landmarks on crop or full frame)
+  robustness  : 100% of outputs finite and within [0, 10] across base + brightness
+                +-15% + JPEG q40 re-encodes; worst per-condition model stability
+                mean |delta| ~0.59/10
+  agreement   : model-vs-CV-reference mean MAE 3.56 / mean AUROC 0.61 (0-10 scale)
+
+### Why the real-face agreement looks bad, and why that is expected
+The CV metric clamp ranges (`skin_metrics._clamp_min_max`) were fit to smooth
+synthetic renders, where baseline signals start near zero. Real photographs carry
+natural texture, edges and lighting gradients that push many raw signals past their
+max, so the CV reference PEGS at 10: acneLevel, darkCircles, poreVisibility,
+texture, blackheads, aging and puffiness all saturate on >=50% of the corpus
+(see `cv_saturation_pct` in the JSON). Where the reference is a constant 10, the
+model-vs-CV MAE measures nothing about real skin — it only confirms the model
+tracks the saturated direction (puffiness: CV=10 constant, model 7.7-9.8, MAE 0.75).
+The synthetic distillation eval remains the release gate; real dermatological
+labelling is still required before production claims.
+
+### Tone coverage of this corpus
+Mean face-crop L* bins: 4 dark (<120), 11 medium (120-160), 1 light (>160). The
+corpus skews medium-light and is too small to validate any per-tone behaviour.
+
 ## Full workflow (train -> evaluate -> calibrate -> validate)
 
 1. Train with:      python train.py --dataset ./dist_dataset --epochs 25

@@ -1,0 +1,125 @@
+{
+  "generated_at": "",
+  "note": "",
+  "images": [
+    {
+      "filename": "dlib_2007_007763.jpg",
+      "url": "https://raw.githubusercontent.com/davisking/dlib/master/examples/faces/2007_007763.jpg",
+      "source_repo": "dlib",
+      "license": "BSL-1.0",
+      "note": "dlib face-detection sample (LFW subject)"
+    },
+    {
+      "filename": "dlib_2008_001009.jpg",
+      "url": "https://raw.githubusercontent.com/davisking/dlib/master/examples/faces/2008_001009.jpg",
+      "source_repo": "dlib",
+      "license": "BSL-1.0",
+      "note": "dlib face-detection sample (LFW subject)"
+    },
+    {
+      "filename": "dlib_2008_001322.jpg",
+      "url": "https://raw.githubusercontent.com/davisking/dlib/master/examples/faces/2008_001322.jpg",
+      "source_repo": "dlib",
+      "license": "BSL-1.0",
+      "note": "dlib face-detection sample (LFW subject)"
+    },
+    {
+      "filename": "dlib_2008_002079.jpg",
+      "url": "https://raw.githubusercontent.com/davisking/dlib/master/examples/faces/2008_002079.jpg",
+      "source_repo": "dlib",
+      "license": "BSL-1.0",
+      "note": "dlib face-detection sample (LFW subject)"
+    },
+    {
+      "filename": "dlib_2008_002470.jpg",
+      "url": "https://raw.githubusercontent.com/davisking/dlib/master/examples/faces/2008_002470.jpg",
+      "source_repo": "dlib",
+      "license": "BSL-1.0",
+      "note": "dlib face-detection sample (LFW subject)"
+    },
+    {
+      "filename": "dlib_2008_002506.jpg",
+      "url": "https://raw.githubusercontent.com/davisking/dlib/master/examples/faces/2008_002506.jpg",
+      "source_repo": "dlib",
+      "license": "BSL-1.0",
+      "note": "dlib face-detection sample (LFW subject)"
+    },
+    {
+      "filename": "dlib_2008_004176.jpg",
+      "url": "https://raw.githubusercontent.com/davisking/dlib/master/examples/faces/2008_004176.jpg",
+      "source_repo": "dlib",
+      "license": "BSL-1.0",
+      "note": "dlib face-detection sample (LFW subject)"
+    },
+    {
+      "filename": "dlib_2008_007676.jpg",
+      "url": "https://raw.githubusercontent.com/davisking/dlib/master/examples/faces/2008_007676.jpg",
+      "source_repo": "dlib",
+      "license": "BSL-1.0",
+      "note": "dlib face-detection sample (LFW subject)"
+    },
+    {
+      "filename": "dlib_2009_004587.jpg",
+      "url": "https://raw.githubusercontent.com/davisking/dlib/master/examples/faces/2009_004587.jpg",
+      "source_repo": "dlib",
+      "license": "BSL-1.0",
+      "note": "dlib face-detection sample (LFW subject)"
+    },
+    {
+      "filename": "dlib_Tom_Cruise_avp_2014_4.jpg",
+      "url": "https://raw.githubusercontent.com/davisking/dlib/master/examples/faces/Tom_Cruise_avp_2014_4.jpg",
+      "source_repo": "dlib",
+      "license": "BSL-1.0",
+      "note": "dlib face-detection sample (LFW subject)"
+    },
+    {
+      "filename": "dlib_bald_guys.jpg",
+      "url": "https://raw.githubusercontent.com/davisking/dlib/master/examples/faces/bald_guys.jpg",
+      "source_repo": "dlib",
+      "license": "BSL-1.0",
+      "note": "dlib face-detection sample (LFW subjects)"
+    },
+    {
+      "filename": "opencv_lena.jpg",
+      "url": "https://raw.githubusercontent.com/opencv/opencv/master/samples/data/lena.jpg",
+      "source_repo": "opencv",
+      "license": "Apache-2.0",
+      "note": "classic Lena test image"
+    },
+    {
+      "filename": "opencv_messi5.jpg",
+      "url": "https://raw.githubusercontent.com/opencv/opencv/master/samples/data/messi5.jpg",
+      "source_repo": "opencv",
+      "license": "Apache-2.0",
+      "note": "OpenCV sample portrait (Lionel Messi)"
+    },
+    {
+      "filename": "facerec_obama.jpg",
+      "url": "https://raw.githubusercontent.com/ageitgey/face_recognition/master/examples/obama.jpg",
+      "source_repo": "face_recognition",
+      "license": "MIT",
+      "note": "public-domain White House photo sample"
+    },
+    {
+      "filename": "facerec_obama2.jpg",
+      "url": "https://raw.githubusercontent.com/ageitgey/face_recognition/master/examples/obama2.jpg",
+      "source_repo": "face_recognition",
+      "license": "MIT",
+      "note": "public-domain White House photo sample"
+    },
+    {
+      "filename": "facerec_biden.jpg",
+      "url": "https://raw.githubusercontent.com/ageitgey/face_recognition/master/examples/biden.jpg",
+      "source_repo": "face_recognition",
+      "license": "MIT",
+      "note": "public-domain White House photo sample"
+    },
+    {
+      "filename": "facerec_lin_manuel_miranda.png",
+      "url": "https://raw.githubusercontent.com/ageitgey/face_recognition/master/examples/lin-manuel-miranda.png",
+      "source_repo": "face_recognition",
+      "license": "MIT",
+      "note": "promotional still sample (Lin-Manuel Miranda)"
+    }
+  ]
+}
