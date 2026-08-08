@@ -27,9 +27,10 @@ const ALLOW_LOCAL_FALLBACK =
 
 // Free-tier hosts (e.g. Render) sleep after inactivity; the first request can
 // take 50+ seconds to wake the instance and may return a 502/504. Give the
-// request a generous timeout and retry once before surfacing an error.
+// request a generous timeout and retry on transient errors until it wakes.
 const REQUEST_TIMEOUT_MS = 120_000;
 const RETRY_DELAY_MS = 5_000;
+const MAX_ATTEMPTS = 4;
 
 function fetchWithTimeout(input: string, init: RequestInit, timeoutMs: number): Promise<Response> {
   const controller = new AbortController();
@@ -40,7 +41,7 @@ function fetchWithTimeout(input: string, init: RequestInit, timeoutMs: number): 
 async function fetchSkinAnalysis(formData: FormData, headers: Record<string, string>): Promise<Response> {
   const isTransient = (status?: number) => status === undefined || status === 502 || status === 503 || status === 504;
 
-  const attempt = async (): Promise<Response> => {
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
     try {
       const response = await fetchWithTimeout(`${ML_BACKEND_URL}/analyze-skin`, {
         method: "POST",
@@ -48,33 +49,18 @@ async function fetchSkinAnalysis(formData: FormData, headers: Record<string, str
         body: formData,
       }, REQUEST_TIMEOUT_MS);
       if (isTransient(response.status)) {
-        const err: Error & { status?: number } = new Error("temporary backend error");
-        err.status = response.status;
-        throw err;
+        // The instance may still be waking; retry rather than surface a 502.
+        throw new Error(`temporary backend error (${response.status})`);
       }
       return response;
     } catch (error) {
-      const status = (error as { status?: number } | undefined)?.status;
-      throw new NetworkError(error instanceof Error ? error.message : "network error", status);
+      if (attempt === MAX_ATTEMPTS) {
+        throw error instanceof Error ? error : new Error("network error");
+      }
+      await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS));
     }
-  };
-
-  try {
-    return await attempt();
-  } catch (firstError) {
-    // The instance may still be cold-starting; wait briefly and try once more
-    // before giving up on a network-level failure.
-    await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS));
-    return await attempt();
   }
-}
-
-class NetworkError extends Error {
-  status?: number;
-  constructor(message: string, status?: number) {
-    super(message);
-    this.status = status;
-  }
+  throw new Error("network error");
 }
 
 /**
@@ -88,8 +74,8 @@ function getCanvasBlob(canvas: HTMLCanvasElement): Promise<Blob | null> {
 
 async function getApiError(response: Response): Promise<string> {
   try {
-    const body = await response.json() as { detail?: string };
-    if (body.detail) return body.detail;
+    const body = await response.json() as { detail?: unknown };
+    if (typeof body.detail === "string") return body.detail;
   } catch {
     // Some infrastructure errors are not JSON; use the status message below.
   }
