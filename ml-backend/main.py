@@ -84,7 +84,13 @@ SUPABASE_KEY = os.getenv(
 )
 
 supabase: Optional[Any] = None
-if create_client and SUPABASE_URL and SUPABASE_KEY and "your-project" not in SUPABASE_URL:
+if (
+    create_client
+    and SUPABASE_URL
+    and SUPABASE_KEY
+    and "your-project" not in SUPABASE_URL
+    and "your-service-role-key" not in SUPABASE_KEY
+):
     try:
         supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
     except Exception as e:
