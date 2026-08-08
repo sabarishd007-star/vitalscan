@@ -6,6 +6,7 @@ import {
   GoogleAuthProvider,
   signInWithPopup,
   sendEmailVerification,
+  sendPasswordResetEmail,
   updateProfile,
   type User,
 } from "firebase/auth";
@@ -42,4 +43,8 @@ export async function updateUserProfile(displayName: string) {
 
 export async function sendVerificationEmail(user: User) {
   return await sendEmailVerification(user);
+}
+
+export async function resetPassword(email: string) {
+  return await sendPasswordResetEmail(auth, email);
 }
