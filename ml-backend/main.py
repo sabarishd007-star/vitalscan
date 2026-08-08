@@ -37,7 +37,7 @@ from app.services.profile_store import save_profile as save_stored_profile
 from app.services.report_store import delete_report as delete_stored_report
 from app.services.report_store import list_reports as list_stored_reports
 from app.services.report_store import save_report as save_stored_report
-from app.services.skin_metrics import compute_all_conditions
+from app.services.skin_metrics import as_concern_scores, compute_all_conditions
 from model import SkinModelLoader
 from skin_regions import analyze_face_regions
 
@@ -368,8 +368,21 @@ async def analyze_skin(
         }
 
         # ML inference + localized region overlay
-        analysis_result = await run_in_threadpool(model_loader.predict, image, user_params)
-        localized = await run_in_threadpool(analyze_face_regions, processed_face)
+        # 1. Run face mesh once (reused for both localized metrics and the
+        #    measured CV conditions below).
+        img_h, img_w = processed_face.shape[:2]
+        mesh_result = mp_face_mesh.process(processed_rgb)
+        if not mesh_result.multi_face_landmarks:
+            raise HTTPException(status_code=422, detail="No face detected")
+        landmarks = mesh_result.multi_face_landmarks[0].landmark
+
+        # 2. Real zone-masked measurements (0-10 severity per concern) replace
+        #    the model's fabricated default scores with measured signal.
+        metrics = compute_all_conditions(processed_face, landmarks, img_w, img_h)
+        measured = as_concern_scores(metrics["conditions"])
+
+        analysis_result = await run_in_threadpool(model_loader.predict, image, user_params, measured)
+        localized = await run_in_threadpool(analyze_face_regions, processed_face, landmarks)
         analysis_result = apply_localized_metrics(analysis_result, localized)
         final_contract = add_api_contract(analysis_result)
 

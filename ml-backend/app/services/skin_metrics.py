@@ -70,6 +70,44 @@ def _clamp_min_max(val: float, min_in: float = 0.0, max_in: float = 100.0) -> fl
 # Public API
 # ---------------------------------------------------------------------------
 
+# Display names returned by compute_all_conditions -> model CONCERNS keys.
+# glowScore and hydration are derived at the end of as_concern_scores().
+CONDITION_TO_CONCERN: dict[str, str] = {
+    "Acne & Breakouts":            "acneLevel",
+    "Blackheads / Whiteheads":     "blackheads",
+    "Oily / Shiny Skin":           "oiliness",
+    "Dry / Flaky Skin":            "dryness",
+    "Sensitive / Redness":         "redness",
+    "Dark Circles":                "darkCircles",
+    "Dark Spots / Pigmentation":   "pigmentation",
+    "Melasma":                     "melasma",
+    "Tanning / Sun Damage":        "tanning",
+    "Enlarged Pores":              "poreVisibility",
+    "Uneven Texture":              "texture",
+    "Dullness / Lack of Radiance": "dullness",
+    "Acne Scars / Marks":          "acneScars",
+    "Ageing / Fine Lines":         "aging",
+    "Under-eye Puffiness":         "puffiness",
+    "Dehydration":                 "dehydration",
+    "Milia":                       "milia",
+    "Sunburn / Irritation":        "sunburn",
+}
+
+
+def as_concern_scores(conditions: dict) -> dict[str, float]:
+    """Map compute_all_conditions output to the 20 model CONCERNS keys (0-10).
+
+    glowScore and hydration are health metrics (higher = better) and are
+    therefore inverted from their visual defect proxies (dullness, dryness).
+    """
+    scores = {concern: round(float(conditions[display]), 1)
+              for display, concern in CONDITION_TO_CONCERN.items()}
+    dullness = float(conditions["Dullness / Lack of Radiance"])
+    dryness = float(conditions["Dry / Flaky Skin"])
+    scores["glowScore"] = round(min(10.0, max(0.0, 10.0 - dullness)), 1)
+    scores["hydration"] = round(min(10.0, max(0.0, 10.0 - dryness)), 1)
+    return scores
+
 def compute_all_conditions(
     img: np.ndarray,
     landmarks: list[Any],

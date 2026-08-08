@@ -46,32 +46,13 @@ from PIL import Image
 
 from app.services.face_mesh import mp_face_mesh
 from app.services.preprocessing import preprocess_skin_image
-from app.services.skin_metrics import compute_all_conditions
+from app.services.skin_metrics import CONDITION_TO_CONCERN, compute_all_conditions
 from model import CONCERNS, SkinModelLoader
 
 PRESENT_AT = 5.0  # a condition counts as "present" above 5/10
 MAX_MAE_THRESHOLD = 1.5  # reference gate from eval_thresholds.example.json
 
-DISPLAY_TO_CONCERN = {
-    "Acne & Breakouts":            "acneLevel",
-    "Blackheads / Whiteheads":     "blackheads",
-    "Oily / Shiny Skin":           "oiliness",
-    "Dry / Flaky Skin":            "dryness",
-    "Sensitive / Redness":         "redness",
-    "Dark Circles":                "darkCircles",
-    "Dark Spots / Pigmentation":   "pigmentation",
-    "Melasma":                     "melasma",
-    "Tanning / Sun Damage":        "tanning",
-    "Enlarged Pores":              "poreVisibility",
-    "Uneven Texture":              "texture",
-    "Dullness / Lack of Radiance": "dullness",
-    "Acne Scars / Marks":          "acneScars",
-    "Ageing / Fine Lines":         "aging",
-    "Under-eye Puffiness":         "puffiness",
-    "Dehydration":                 "dehydration",
-    "Milia":                       "milia",
-    "Sunburn / Irritation":        "sunburn",
-}
+DISPLAY_TO_CONCERN = CONDITION_TO_CONCERN
 
 
 def sha256_file(path: str) -> str:

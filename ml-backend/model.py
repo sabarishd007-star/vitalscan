@@ -1,5 +1,7 @@
 import json
 import os
+from typing import Optional
+
 import torch
 import torch.nn as nn
 from torchvision import models, transforms
@@ -70,17 +72,31 @@ class SkinModelLoader:
             self.model = None
             self.is_mock = True
 
-    def predict(self, image: Image.Image, user_params: dict) -> dict:
+    def predict(self, image: Image.Image, user_params: dict, measured: Optional[dict] = None) -> dict:
         """
         Runs model inference if weights are loaded, otherwise processes the image
         with heuristics to return dynamic, realistic condition metrics.
+
+        ``measured`` is an optional dict of {CONCERNS key: 0-10} values from the
+        zone-masked CV pipeline (``app/services/skin_metrics.as_concern_scores``).
+        When supplied, those measured values replace the fabricated defaults so
+        that reported scores reflect the actual image signal.
         """
         if not self.is_mock and self.model is not None:
-            return self._predict_ml(image, user_params)
+            return self._predict_ml(image, user_params, measured)
         else:
-            return self._predict_heuristic(image, user_params)
+            return self._predict_heuristic(image, user_params, measured)
 
-    def _predict_ml(self, image: Image.Image, user_params: dict) -> dict:
+    def _apply_measured(self, results: dict, measured: Optional[dict]) -> dict:
+        """Overlay real measured values on top of the fabricated result dict."""
+        if not measured:
+            return results
+        for key, value in measured.items():
+            if key in results:
+                results[key] = round(float(min(10.0, max(0.0, value))), 1)
+        return results
+
+    def _predict_ml(self, image: Image.Image, user_params: dict, measured: Optional[dict] = None) -> dict:
         try:
             # Raw sigmoid probabilities, optionally re-scaled by calibration.json
             probs = self.predict_probabilities(image)
@@ -96,13 +112,16 @@ class SkinModelLoader:
             certainty = float(np.mean(np.maximum(probs, 1.0 - probs))) * 100.0
             confidence = int(max(50, min(95, certainty)))
 
+            # Replace fabricated/placeholder outputs with real CV measurements
+            results = self._apply_measured(results, measured)
+
             # Apply user parameter bias to output
             results = self._apply_lifestyle_adjustments(results, user_params)
             return self._compile_response(results, confidence=confidence)
             
         except Exception as e:
             print(f"ML inference exception: {e}. Falling back to heuristic prediction.")
-            return self._predict_heuristic(image, user_params)
+            return self._predict_heuristic(image, user_params, measured)
 
     def predict_logits(self, image: Image.Image) -> np.ndarray:
         """Raw logits for the 20 concerns (uncalibrated), shape (20,)."""
@@ -150,7 +169,7 @@ class SkinModelLoader:
             calibrated[idx] = float(np.clip(p, 1e-6, 1.0 - 1e-6))
         return calibrated
 
-    def _predict_heuristic(self, image: Image.Image, user_params: dict) -> dict:
+    def _predict_heuristic(self, image: Image.Image, user_params: dict, measured: Optional[dict] = None) -> dict:
         """
         Premium fallback mode: Uses PIL statistics (color distributions, contrast, brightness)
         to calculate realistic and responsive scores based on the actual face image.
@@ -225,6 +244,7 @@ class SkinModelLoader:
         }
 
         # Apply lifestyle and target concern adjustments
+        results = self._apply_measured(results, measured)
         results = self._apply_lifestyle_adjustments(results, user_params)
 
         # Deterministic confidence from measured cheek contrast (0 = flat, 1 = high texture)

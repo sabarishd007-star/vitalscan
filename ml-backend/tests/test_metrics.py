@@ -17,7 +17,7 @@ Run from ml-backend/ with:  python -m pytest
 import numpy as np
 import pytest
 
-from app.services.skin_metrics import compute_all_conditions
+from app.services.skin_metrics import as_concern_scores, compute_all_conditions
 
 W, H = 640, 480
 
@@ -179,3 +179,23 @@ def test_dark_circles_sensitivity():
     plain = conds(analyze(base_image()))
     shadowed = conds(analyze(shadow_image()))
     assert shadowed["Dark Circles"] > plain["Dark Circles"]
+
+
+def test_as_concern_scores_maps_all_20_concerns():
+    scores = as_concern_scores(conds(analyze(base_image())))
+    assert len(scores) == 20
+    assert set(scores) == {
+        "acneLevel", "darkCircles", "oiliness", "dryness", "redness",
+        "poreVisibility", "pigmentation", "texture", "glowScore", "hydration",
+        "blackheads", "melasma", "tanning", "dullness", "acneScars",
+        "aging", "puffiness", "dehydration", "milia", "sunburn",
+    }
+    for value in scores.values():
+        assert 0.0 <= value <= 10.0
+
+
+def test_glow_and_hydration_are_inverted_from_visual_defects():
+    base = conds(analyze(base_image()))
+    scores = as_concern_scores(base)
+    assert scores["glowScore"] == round(10.0 - base["Dullness / Lack of Radiance"], 1)
+    assert scores["hydration"] == round(10.0 - base["Dry / Flaky Skin"], 1)

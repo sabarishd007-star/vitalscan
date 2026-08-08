@@ -53,14 +53,18 @@ def _region(mask: np.ndarray) -> dict[str, float]:
     return {"x": round(x / image_width, 4), "y": round(y / image_height, 4), "w": round(width / image_width, 4), "h": round(height / image_height, 4)}
 
 
-def analyze_face_regions(image_bgr: np.ndarray) -> dict:
-    """Return region-limited 0–10 cosmetic signals and normalized overlay boxes."""
-    height, width = image_bgr.shape[:2]
-    result = face_mesh.process(cv2.cvtColor(image_bgr, cv2.COLOR_BGR2RGB))
-    if not result.multi_face_landmarks:
-        raise ValueError("No face mesh detected. Face the camera with even front lighting and try again.")
+def analyze_face_regions(image_bgr: np.ndarray, landmarks=None) -> dict:
+    """Return region-limited 0–10 cosmetic signals and normalized overlay boxes.
 
-    landmarks = result.multi_face_landmarks[0].landmark
+    ``landmarks`` may be supplied to avoid a second MediaPipe pass; when omitted
+    the detector runs internally (used by callers that only need this service).
+    """
+    height, width = image_bgr.shape[:2]
+    if landmarks is None:
+        result = face_mesh.process(cv2.cvtColor(image_bgr, cv2.COLOR_BGR2RGB))
+        if not result.multi_face_landmarks:
+            raise ValueError("No face mesh detected. Face the camera with even front lighting and try again.")
+        landmarks = result.multi_face_landmarks[0].landmark
     under_eye = _mask((height, width), [_points(landmarks, LEFT_UNDER_EYE, width, height), _points(landmarks, RIGHT_UNDER_EYE, width, height)])
     cheeks = _mask((height, width), [_points(landmarks, LEFT_CHEEK, width, height), _points(landmarks, RIGHT_CHEEK, width, height)])
     forehead = _mask((height, width), [_points(landmarks, FOREHEAD, width, height)])

@@ -93,3 +93,44 @@ def test_lifestyle_adjustments_affect_hydration(loader):
     high_water = loader.predict(_synthetic_pil(), {**DEFAULT_PARAMS, "waterIntake": 3.0})
     assert low_water["hydration"] < high_water["hydration"]
     assert low_water["dehydration"] > high_water["dehydration"]
+
+
+def test_measured_overrides_ml_path(loader):
+    """
+    Zone-masked CV measurements must replace the model's fabricated/placeholder
+    scores (darkCircles, pigmentation, melasma, tanning, acneScars, aging,
+    puffiness, milia) when passed through the ``measured`` argument.
+    """
+    measured = {
+        "acneLevel": 8.2, "darkCircles": 6.5, "oiliness": 7.0, "dryness": 2.0,
+        "redness": 1.0, "poreVisibility": 5.5, "pigmentation": 7.7, "texture": 4.0,
+        "glowScore": 2.5, "hydration": 8.0, "blackheads": 3.0, "melasma": 6.1,
+        "tanning": 5.0, "dullness": 7.5, "acneScars": 4.4, "aging": 5.9,
+        "puffiness": 6.0, "dehydration": 2.2, "milia": 3.3, "sunburn": 0.5,
+    }
+    result = loader.predict(_synthetic_pil(), dict(DEFAULT_PARAMS), measured)
+    for concern, value in measured.items():
+        assert result[concern] == value, f"{concern} not overridden: {result[concern]}"
+    for concern in CONCERNS:
+        assert 0.0 <= result[concern] <= 10.0
+
+
+def test_measured_overrides_heuristic_path():
+    """The heuristic fallback must honour measured values too."""
+    from model import SkinModelLoader
+
+    heuristic = SkinModelLoader(model_path="does-not-exist.pth")
+    assert heuristic.is_mock is True
+    measured = {"darkCircles": 6.5, "pigmentation": 7.7, "melasma": 6.1,
+                "tanning": 5.0, "acneScars": 4.4, "aging": 5.9,
+                "puffiness": 6.0, "milia": 3.3}
+    result = heuristic.predict(_synthetic_pil(), dict(DEFAULT_PARAMS), measured)
+    for concern, value in measured.items():
+        assert result[concern] == value, f"{concern} not overridden: {result[concern]}"
+
+
+def test_measured_none_keeps_fabricated_defaults(loader):
+    """Without measured values the legacy fallback scores are preserved."""
+    baseline = loader.predict(_synthetic_pil(), dict(DEFAULT_PARAMS))
+    with_measured = loader.predict(_synthetic_pil(), dict(DEFAULT_PARAMS), None)
+    assert baseline == with_measured
