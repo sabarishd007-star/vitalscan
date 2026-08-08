@@ -25,6 +25,58 @@ const ML_BACKEND_URL = resolveBackendUrl();
 const ALLOW_LOCAL_FALLBACK =
   !import.meta.env.PROD && import.meta.env.VITE_ALLOW_LOCAL_ANALYSIS_FALLBACK === "true";
 
+// Free-tier hosts (e.g. Render) sleep after inactivity; the first request can
+// take 50+ seconds to wake the instance and may return a 502/504. Give the
+// request a generous timeout and retry once before surfacing an error.
+const REQUEST_TIMEOUT_MS = 120_000;
+const RETRY_DELAY_MS = 5_000;
+
+function fetchWithTimeout(input: string, init: RequestInit, timeoutMs: number): Promise<Response> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  return fetch(input, { ...init, signal: controller.signal }).finally(() => clearTimeout(timer));
+}
+
+async function fetchSkinAnalysis(formData: FormData, headers: Record<string, string>): Promise<Response> {
+  const isTransient = (status?: number) => status === undefined || status === 502 || status === 503 || status === 504;
+
+  const attempt = async (): Promise<Response> => {
+    try {
+      const response = await fetchWithTimeout(`${ML_BACKEND_URL}/analyze-skin`, {
+        method: "POST",
+        headers,
+        body: formData,
+      }, REQUEST_TIMEOUT_MS);
+      if (isTransient(response.status)) {
+        const err: Error & { status?: number } = new Error("temporary backend error");
+        err.status = response.status;
+        throw err;
+      }
+      return response;
+    } catch (error) {
+      const status = (error as { status?: number } | undefined)?.status;
+      throw new NetworkError(error instanceof Error ? error.message : "network error", status);
+    }
+  };
+
+  try {
+    return await attempt();
+  } catch (firstError) {
+    // The instance may still be cold-starting; wait briefly and try once more
+    // before giving up on a network-level failure.
+    await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS));
+    return await attempt();
+  }
+}
+
+class NetworkError extends Error {
+  status?: number;
+  constructor(message: string, status?: number) {
+    super(message);
+    this.status = status;
+  }
+}
+
 /**
  * Utility to convert canvas to Blob (JPEG) wrapped in a Promise.
  */
@@ -105,11 +157,7 @@ export async function analyzeSkinOnServer(
       // User context optional
     }
 
-    const response = await fetch(`${ML_BACKEND_URL}/analyze-skin`, {
-      method: "POST",
-      headers,
-      body: formData,
-    });
+    const response = await fetchSkinAnalysis(formData, headers);
 
     if (!response.ok) {
       throw new Error(await getApiError(response));
