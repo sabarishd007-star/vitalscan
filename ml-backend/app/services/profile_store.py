@@ -71,8 +71,10 @@ def _supabase_get(user_id: str, client: Any) -> Optional[dict]:
 
 
 def _supabase_save(user_id: str, profile: dict, client: Any) -> dict:
+    # updated_at is omitted so the table default (now()) applies; a literal
+    # "now()" string would not be evaluated by Postgres and would fail.
     res = client.table("profiles").upsert(
-        {"user_id": user_id, "profile": profile, "updated_at": "now()"},
+        {"user_id": user_id, "profile": profile},
         on_conflict="user_id",
     ).execute()
     if res and res.data:
