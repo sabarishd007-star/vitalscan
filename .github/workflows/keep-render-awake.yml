@@ -1,0 +1,13 @@
+name: keep-render-awake
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Render backend health endpoint
+        run: curl -sS -o /dev/null -w "%{http_code}" https://vitalscan-api-y891.onrender.com/health
