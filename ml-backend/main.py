@@ -37,6 +37,9 @@ from app.services.profile_store import save_profile as save_stored_profile
 from app.services.report_store import delete_report as delete_stored_report
 from app.services.report_store import list_reports as list_stored_reports
 from app.services.report_store import save_report as save_stored_report
+from app.services.skin_report_store import delete_skin_report as delete_stored_skin_report
+from app.services.skin_report_store import list_skin_reports as list_stored_skin_reports
+from app.services.skin_report_store import save_skin_report as save_stored_skin_report
 from app.services.skin_metrics import as_concern_scores, compute_all_conditions
 from model import SkinModelLoader
 from skin_regions import analyze_face_regions
@@ -146,6 +149,29 @@ class ReportCreate(BaseModel):
     healthScore: float = Field(ge=0, le=100)
     riskLevel: str
     stressLevel: Optional[str] = "Unknown"
+
+
+class SkinReportCreate(BaseModel):
+    """Payload for POST /api/skin-reports (snake_case, matching the scan fields).
+
+    Every field is optional (some scans only capture a subset); the owning
+    Firebase UID is taken from the X-User-Id header, never the body.
+    """
+    model_config = ConfigDict(extra="ignore")
+
+    skin_type: Optional[str] = None
+    acne_level: Optional[float] = None
+    dark_circles: Optional[float] = None
+    oiliness: Optional[float] = None
+    dryness: Optional[float] = None
+    redness: Optional[float] = None
+    pore_visibility: Optional[float] = None
+    pigmentation: Optional[float] = None
+    texture: Optional[float] = None
+    glow_score: Optional[float] = None
+    hydration: Optional[float] = None
+    overall_score: Optional[float] = None
+    recommendations: Optional[dict[str, Any]] = None
 
 
 class EmergencyContact(BaseModel):
@@ -442,6 +468,52 @@ def remove_report(report_id: str) -> dict:
         raise HTTPException(status_code=503, detail="Report store unavailable")
     if not deleted:
         raise HTTPException(status_code=404, detail="Report not found")
+    return {"status": "deleted", "id": report_id}
+
+
+# ---------------------------------------------------------------------------
+# Skin scan history  (frontend: src/services/skinReportService.ts)
+# ---------------------------------------------------------------------------
+
+@app.get("/api/skin-reports")
+def get_skin_reports(user_id: Optional[str] = Header(None, alias="X-User-Id")) -> list[dict]:
+    """Return the authenticated user's skin scan reports, newest first."""
+    uid = _require_user_id(user_id)
+    try:
+        return list_stored_skin_reports(uid, supabase_client=supabase)
+    except Exception as store_err:
+        print(f"Error listing skin reports: {store_err}")
+        raise HTTPException(status_code=503, detail="Skin report store unavailable")
+
+
+@app.post("/api/skin-reports", status_code=201)
+def create_skin_report(
+    report: SkinReportCreate,
+    user_id: Optional[str] = Header(None, alias="X-User-Id"),
+) -> dict:
+    """Persist a skin scan report for the authenticated user."""
+    uid = _require_user_id(user_id)
+    try:
+        return save_stored_skin_report(uid, report.model_dump(), supabase_client=supabase)
+    except Exception as store_err:
+        print(f"Error saving skin report: {store_err}")
+        raise HTTPException(status_code=503, detail="Skin report store unavailable")
+
+
+@app.delete("/api/skin-reports/{report_id}")
+def remove_skin_report(
+    report_id: str,
+    user_id: Optional[str] = Header(None, alias="X-User-Id"),
+) -> dict:
+    """Delete one of the user's skin scan reports; 404 when the id does not exist."""
+    uid = _require_user_id(user_id)
+    try:
+        deleted = delete_stored_skin_report(uid, report_id, supabase_client=supabase)
+    except Exception as store_err:
+        print(f"Error deleting skin report: {store_err}")
+        raise HTTPException(status_code=503, detail="Skin report store unavailable")
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Skin report not found")
     return {"status": "deleted", "id": report_id}
 
 

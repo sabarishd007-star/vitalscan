@@ -44,7 +44,7 @@ export default function SkinHistory() {
     setError(null);
     const { data, error: fetchError } = await getSkinReports();
     if (fetchError) {
-      setError("Could not load scan history. Please ensure the skin_reports table is set up in Supabase.");
+      setError("Could not load scan history. Please ensure the ML backend is running and the skin_reports table is set up in Supabase (migrations 0002 + 0003).");
     } else {
       setReports((data as SkinReport[]) ?? []);
     }
@@ -106,26 +106,13 @@ export default function SkinHistory() {
             <p className="text-amber-300 font-bold text-sm mb-2">⚠️ Database Not Configured</p>
             <p className="text-amber-200/70 text-sm">{error}</p>
             <div className="mt-3 bg-black/40 rounded-xl p-4">
-              <p className="text-amber-300 text-xs font-mono mb-2">Run this SQL in your Supabase SQL editor:</p>
-              <pre className="text-green-400 text-xs font-mono whitespace-pre-wrap">{`create table skin_reports (
-  id uuid primary key default gen_random_uuid(),
-  skin_type text,
-  acne_level numeric,
-  dark_circles numeric,
-  oiliness numeric,
-  dryness numeric,
-  redness numeric,
-  pore_visibility numeric,
-  pigmentation numeric,
-  texture numeric,
-  glow_score numeric,
-  hydration numeric,
-  overall_score numeric,
-  recommendations jsonb,
-  created_at timestamp with time zone default now()
-);
-alter table skin_reports enable row level security;
-create policy "Allow all" on skin_reports for all using (true);`}</pre>
+              <p className="text-amber-300 text-xs font-mono mb-2">Required migrations (run in your Supabase SQL editor):</p>
+              <pre className="text-green-400 text-xs font-mono whitespace-pre-wrap">{`0002_analysis_and_report_tables.sql
+0003_secure_skin_reports.sql
+
+alter table public.skin_reports add column if not exists user_id text;
+drop policy if exists "Allow all" on public.skin_reports;
+alter table public.skin_reports enable row level security;`}</pre>
             </div>
           </div>
         )}
