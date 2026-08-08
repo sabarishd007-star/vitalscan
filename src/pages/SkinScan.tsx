@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { validateImageQuality, type SkinAnalysisResult } from "../utils/skinEngine";
 import { getFaceAlignment, getFaceMesh, type FaceAlignment, type FaceMeshData } from "../utils/faceLandmarker";
@@ -18,6 +18,26 @@ const SCAN_STEPS = [
   { emoji: "✨", text: "Calculating Glow Score & Pore Visibility..." },
   { emoji: "📊", text: "Generating Personalized Skin Report..." },
 ];
+
+function cameraErrorMessage(err: unknown): string {
+  const name =
+    typeof err === "object" && err !== null && "name" in err
+      ? String((err as { name: unknown }).name)
+      : "";
+  switch (name) {
+    case "NotAllowedError":
+    case "SecurityError":
+      return "Camera access denied. Allow camera permission in your browser settings (click the camera icon in the address bar), then reload.";
+    case "NotFoundError":
+    case "OverconstrainedError":
+      return "No camera was found. Connect a webcam or enable camera access for this device.";
+    case "NotReadableError":
+    case "AbortError":
+      return "The camera is already in use by another app. Close that app and try again.";
+    default:
+      return "Could not start the camera. Please allow camera permissions and reload.";
+  }
+}
 
 const METRIC_LABELS: Record<string, string> = {
   acneLevel: "Acne Level",
@@ -86,30 +106,45 @@ export default function SkinScan() {
   const [skinResult, setSkinResult] = useState<SkinAnalysisResult | null>(null);
   const [capturedImageUrl, setCapturedImageUrl] = useState<string | null>(null);
 
+  const streamRef = useRef<MediaStream | null>(null);
+
   // Camera init
-  useEffect(() => {
-    let stream: MediaStream | null = null;
-    async function enableCamera() {
-      try {
-        setCameraError(null);
-        stream = await navigator.mediaDevices.getUserMedia({
-          video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: "user" },
-          audio: false,
-        });
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
-          videoRef.current.onloadedmetadata = () => {
-            videoRef.current?.play().catch(console.error);
-            setCameraActive(true);
-          };
-        }
-      } catch {
-        setCameraError("Camera access denied. Please allow camera permissions in your browser settings.");
-      }
+  const enableCamera = useCallback(async () => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((t) => t.stop());
+      streamRef.current = null;
     }
-    enableCamera();
-    return () => { if (stream) stream.getTracks().forEach((t) => t.stop()); };
+    setCameraError(null);
+    setCameraActive(false);
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: "user" },
+        audio: false,
+      });
+      streamRef.current = stream;
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        videoRef.current.onloadedmetadata = () => {
+          videoRef.current?.play().catch(() => {
+            setCameraError("Your browser blocked the camera preview. Click anywhere on the page, then reload.");
+          });
+          setCameraActive(true);
+        };
+      }
+    } catch (err) {
+      setCameraError(cameraErrorMessage(err));
+    }
   }, []);
+
+  useEffect(() => {
+    void enableCamera();
+    return () => {
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach((t) => t.stop());
+        streamRef.current = null;
+      }
+    };
+  }, [enableCamera]);
 
   // Real-time quality validation check loop
   useEffect(() => {
@@ -300,10 +335,10 @@ export default function SkinScan() {
                   <p className="text-4xl mb-3">📵</p>
                   <p className="text-amber-400 font-medium text-sm">{cameraError}</p>
                   <button
-                    onClick={() => window.location.reload()}
+                    onClick={() => void enableCamera()}
                     className="mt-4 bg-pink-600 hover:bg-pink-700 text-white text-sm font-bold px-4 py-2 rounded-xl transition"
                   >
-                    Reload & Allow Camera
+                    Retry Camera
                   </button>
                 </div>
               ) : (
