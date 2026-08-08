@@ -2,7 +2,7 @@ import { analyzeSkinFromFrame } from "../utils/skinEngine";
 import type { SkinAnalysisResult } from "../utils/skinEngine";
 import { supabase } from "../supabase";
 
-const DEFAULT_PRODUCTION_URL = "https://vitalscan-backend-production.up.railway.app";
+const DEFAULT_PRODUCTION_URL = "https://vitalscan-api-y891.onrender.com";
 
 function isLocalhostUrl(url: string): boolean {
   return /^https?:\/\/(localhost|127\.0\.0\.1|0\.0\.0\.0|\[::1\])(:\d+)?$/i.test(url);
