@@ -122,7 +122,14 @@ export const SkinAnalysisOverlay: React.FC<SkinAnalysisOverlayProps> = ({
   // Real MediaPipe mesh drives the wireframe when present; otherwise fall back
   // to the static anatomical template.
   const usesLiveMesh = Boolean(meshPoints && meshPoints.length > 100);
-  const meshVertices: Coordinate[] = usesLiveMesh ? meshPoints ?? CLEAN_FACE_LANDMARKS : CLEAN_FACE_LANDMARKS;
+  // The displayed photo is the mirrored selfie capture (see skinAnalysisService),
+  // but MediaPipe landmarks are relative to the un-mirrored camera frame. Flip X
+  // so the wireframe and pulse anchors align with the mirrored image. Callout
+  // anchors use the server's bounding_regions, which are relative to the same
+  // mirrored image, so they are NOT flipped here.
+  const meshVertices: Coordinate[] = usesLiveMesh
+    ? (meshPoints ?? []).map((p) => ({ x: 1 - p.x, y: p.y }))
+    : CLEAN_FACE_LANDMARKS;
   const meshConnections: [number, number][] = usesLiveMesh ? meshEdges ?? [] : CLEAN_MESH_EDGES;
 
   const anchorPoint = (issue: DetectedIssue): Coordinate => {

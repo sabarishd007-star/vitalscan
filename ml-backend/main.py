@@ -198,12 +198,17 @@ def require_validated_production_model() -> None:
 
 
 def score_status(score: float, higher_is_better: bool = False) -> str:
+    """Map a 0-100 contract score to a user-facing status.
+
+    For concern metrics (higher = more visible/severe) the status reads as
+    SEVERITY so a large number is unambiguous: 95/100 blemishes → "Severe".
+    For health metrics (higher = better) it reads as a quality label."""
     value = score if higher_is_better else 100 - score
     if value >= 75:
-        return "Low" if not higher_is_better else "Strong"
+        return "Strong" if higher_is_better else "Mild"
     if value >= 45:
         return "Moderate"
-    return "High" if not higher_is_better else "Needs attention"
+    return "Needs attention" if higher_is_better else "Severe"
 
 
 def build_metric(score_10: float, description: str, higher_is_better: bool = False) -> dict:
