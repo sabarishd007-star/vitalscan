@@ -132,6 +132,38 @@ Storage (`app/services/report_store.py`): a local JSON store at `ml-backend/data
 
 ---
 
+### User profile — `GET/PUT /api/profile`
+The signed-in user's profile used by the frontend (`src/services/profileService.ts`). Both endpoints require the Firebase UID in the `X-User-Id` header (400 when missing). `GET` returns 404 when no profile exists yet.
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/api/profile` | Return the profile for the `X-User-Id` user (404 when absent) |
+| `PUT` | `/api/profile` | Create or update the profile; returns the stored document |
+
+Storage (`app/services/profile_store.py`): a local JSON store at `ml-backend/data/profiles.json` by default (gitignored), or a Supabase `profiles` table (upsert on `user_id`) when configured. The profile body is a single JSON document (`profile` jsonb column), so the field set can evolve without schema churn. Create the table with `supabase/migrations/0001_create_profiles_table.sql`.
+
+**`PUT /api/profile` payload (camelCase):**
+```json
+{
+  "displayName": "Ada Lovelace",
+  "dateOfBirth": "1990-04-01",
+  "sex": "female",
+  "heightCm": 168,
+  "weightKg": 60,
+  "activityLevel": "moderate",
+  "conditions": ["asthma"],
+  "medications": ["ventolin"],
+  "allergies": ["penicillin"],
+  "emergencyContacts": [{"name": "Grace Hopper", "relationship": "Partner", "phone": "555-0100"}],
+  "healthTargets": ["better sleep"],
+  "notificationRules": {"email": true, "sms": false, "push": true},
+  "reportOptions": {"anonymize": true}
+}
+```
+Unknown fields are ignored; `heightCm`/`weightKg` are range-checked (422 on invalid).
+
+---
+
 ## 🧠 Running Modes
 
 | Mode | Condition | Description |

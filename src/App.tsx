@@ -9,6 +9,7 @@ import SkinScan from "./pages/SkinScan";
 import SkinDashboard from "./pages/SkinDashboard";
 import SkinReport from "./pages/SkinReport";
 import SkinHistory from "./pages/SkinHistory";
+import ProfilePage from "./pages/Profile";
 
 function App() {
   return (
@@ -23,6 +24,7 @@ function App() {
         <Route path="/skin-dashboard" element={<ProtectedRoute><SkinDashboard /></ProtectedRoute>} />
         <Route path="/skin-report" element={<ProtectedRoute><SkinReport /></ProtectedRoute>} />
         <Route path="/skin-history" element={<ProtectedRoute><SkinHistory /></ProtectedRoute>} />
+        <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
         <Route path="/scan" element={<Navigate to="/skin-scan" replace />} />
         <Route path="/dashboard" element={<Navigate to="/skin-dashboard" replace />} />
         <Route path="/report" element={<Navigate to="/skin-report" replace />} />

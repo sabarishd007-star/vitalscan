@@ -86,9 +86,12 @@ def test_missing_store_file_lists_empty(tmp_path):
 def client(tmp_path, monkeypatch):
     from fastapi.testclient import TestClient
 
+    import main
     from main import app
 
-    # Redirect the local store for the whole test session.
+    # Force the offline local store for the whole test session (supabase is
+    # installed in the dev venv, so we must disable it to stay deterministic).
+    monkeypatch.setattr(main, "supabase", None)
     monkeypatch.setattr(report_store, "DEFAULT_STORE_PATH", tmp_path / "reports.json")
     with TestClient(app) as c:
         yield c

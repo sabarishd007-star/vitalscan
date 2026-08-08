@@ -6,12 +6,16 @@ import {
   GoogleAuthProvider,
   signInWithPopup,
   sendEmailVerification,
+  updateProfile,
   type User,
 } from "firebase/auth";
 
-export async function signUp(email: string, password: string) {
+export async function signUp(email: string, password: string, displayName?: string) {
   const userCredential = await createUserWithEmailAndPassword(auth, email, password);
   if (userCredential.user) {
+    if (displayName?.trim()) {
+      await updateProfile(userCredential.user, { displayName: displayName.trim() });
+    }
     await sendEmailVerification(userCredential.user);
   }
   return userCredential;
@@ -28,6 +32,12 @@ export async function signOut() {
 export async function signInWithGoogle() {
   const provider = new GoogleAuthProvider();
   return await signInWithPopup(auth, provider);
+}
+
+export async function updateUserProfile(displayName: string) {
+  const user = auth.currentUser;
+  if (!user) throw new Error("Not signed in");
+  await updateProfile(user, { displayName: displayName.trim() });
 }
 
 export async function sendVerificationEmail(user: User) {

@@ -13,6 +13,7 @@ export default function Register() {
   const location = useLocation();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [displayName, setDisplayName] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -21,7 +22,7 @@ export default function Register() {
     setError("");
     setLoading(true);
     try {
-      await signUp(email, password);
+      await signUp(email, password, displayName);
       alert("Registration Successful! Check your email for a verification link.");
       navigate("/login", { replace: true, state: location.state });
     } catch (error: unknown) {
@@ -52,6 +53,14 @@ export default function Register() {
         )}
 
         <form onSubmit={register} className="space-y-4">
+          <input
+            type="text"
+            placeholder="Full Name"
+            value={displayName}
+            className="w-full border rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            onChange={(e) => setDisplayName(e.target.value)}
+          />
+
           <input
             type="email"
             placeholder="Email Address"

@@ -22,7 +22,7 @@ export default function Navbar() {
           <Link to="/about" className="hover:text-pink-100">About</Link>
           {user ? (
             <div className="flex items-center gap-4 border-l border-white/30 pl-6">
-              <span className="flex items-center gap-1.5 text-sm bg-white/15 px-3 py-1.5 rounded-full font-medium"><UserIcon size={16} />{user.displayName || user.email?.split("@")[0]}</span>
+              <Link to="/profile" className="flex items-center gap-1.5 text-sm bg-white/15 hover:bg-white/25 px-3 py-1.5 rounded-full font-medium transition"><UserIcon size={16} />{user.displayName || user.email?.split("@")[0]}</Link>
               <button onClick={handleLogout} className="flex items-center gap-1.5 bg-red-600 hover:bg-red-700 text-white px-3.5 py-1.5 rounded-xl text-sm font-bold transition shadow"><LogOut size={16} />Logout</button>
             </div>
           ) : <Link to="/login" className="bg-white hover:bg-pink-50 text-pink-700 px-4 py-1.5 rounded-xl font-bold transition shadow">Login</Link>}

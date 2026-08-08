@@ -32,6 +32,8 @@ except ImportError:
 # Service imports — resolve correctly when uvicorn runs from ml-backend/
 from app.services.preprocessing import preprocess_skin_image
 from app.services.face_mesh import mp_face_mesh, ZONES, get_zone_mask
+from app.services.profile_store import get_profile as get_stored_profile
+from app.services.profile_store import save_profile as save_stored_profile
 from app.services.report_store import delete_report as delete_stored_report
 from app.services.report_store import list_reports as list_stored_reports
 from app.services.report_store import save_report as save_stored_report
@@ -144,6 +146,34 @@ class ReportCreate(BaseModel):
     healthScore: float = Field(ge=0, le=100)
     riskLevel: str
     stressLevel: Optional[str] = "Unknown"
+
+
+class EmergencyContact(BaseModel):
+    name: str = ""
+    relationship: Optional[str] = None
+    phone: Optional[str] = None
+
+
+class ProfileUpdate(BaseModel):
+    """Payload for PUT /api/profile (camelCase, matching the frontend service).
+
+    The profile is stored as a JSON document keyed by the Firebase UID, so the
+    field set here can evolve without a schema migration."""
+    model_config = ConfigDict(extra="ignore")
+
+    displayName: Optional[str] = None
+    dateOfBirth: Optional[str] = None
+    sex: Optional[str] = None
+    heightCm: Optional[float] = Field(default=None, ge=30, le=300)
+    weightKg: Optional[float] = Field(default=None, ge=1, le=500)
+    activityLevel: Optional[str] = None
+    conditions: Optional[list[str]] = None
+    medications: Optional[list[str]] = None
+    allergies: Optional[list[str]] = None
+    emergencyContacts: Optional[list[EmergencyContact]] = None
+    healthTargets: Optional[list[str]] = None
+    notificationRules: Optional[dict[str, Any]] = None
+    reportOptions: Optional[dict[str, Any]] = None
 
 
 # ---------------------------------------------------------------------------
@@ -395,3 +425,41 @@ def remove_report(report_id: str) -> dict:
     if not deleted:
         raise HTTPException(status_code=404, detail="Report not found")
     return {"status": "deleted", "id": report_id}
+
+
+# ---------------------------------------------------------------------------
+# User profile  (frontend: src/services/profileService.ts)
+# ---------------------------------------------------------------------------
+
+def _require_user_id(user_id: Optional[str]) -> str:
+    if not user_id or not user_id.strip():
+        raise HTTPException(status_code=400, detail="X-User-Id header is required")
+    return user_id.strip()
+
+
+@app.get("/api/profile")
+def get_profile(user_id: Optional[str] = Header(None, alias="X-User-Id")) -> dict:
+    """Return the profile for the authenticated user (Firebase UID header)."""
+    uid = _require_user_id(user_id)
+    try:
+        profile = get_stored_profile(uid, supabase_client=supabase)
+    except Exception as store_err:
+        print(f"Error reading profile: {store_err}")
+        raise HTTPException(status_code=503, detail="Profile store unavailable")
+    if profile is None:
+        raise HTTPException(status_code=404, detail="Profile not found")
+    return profile
+
+
+@app.put("/api/profile")
+def put_profile(
+    profile: ProfileUpdate,
+    user_id: Optional[str] = Header(None, alias="X-User-Id"),
+) -> dict:
+    """Create or update the profile for the authenticated user."""
+    uid = _require_user_id(user_id)
+    try:
+        return save_stored_profile(uid, profile.model_dump(), supabase_client=supabase)
+    except Exception as store_err:
+        print(f"Error saving profile: {store_err}")
+        raise HTTPException(status_code=503, detail="Profile store unavailable")
