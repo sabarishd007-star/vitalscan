@@ -38,3 +38,5 @@ testsprite_tests/tmp/
 ml-backend/venv/
 ml-backend/__pycache__/
 ml-backend/**/*.pyc
+
+.vercel

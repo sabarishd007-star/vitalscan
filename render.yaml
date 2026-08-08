@@ -14,7 +14,7 @@ services:
   - type: web
     name: vitalscan-api
     runtime: docker
-    repo: https://github.com/your-github-user/vitalscan
+    repo: https://github.com/sabarishd007-star/vitalscan
     plan: free
     dockerfilePath: ml-backend/Dockerfile
     healthCheckPath: /health
