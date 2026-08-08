@@ -17,6 +17,7 @@ services:
     repo: https://github.com/sabarishd007-star/vitalscan
     plan: free
     dockerfilePath: ml-backend/Dockerfile
+    dockerContext: ml-backend
     healthCheckPath: /health
     envVars:
       - key: APP_ENV
