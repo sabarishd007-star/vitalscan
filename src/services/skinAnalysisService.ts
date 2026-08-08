@@ -2,21 +2,8 @@ import { analyzeSkinFromFrame } from "../utils/skinEngine";
 import type { SkinAnalysisResult } from "../utils/skinEngine";
 import { supabase } from "../supabase";
 
-const DEFAULT_PRODUCTION_URL = "https://vitalscan-api-y891.onrender.com";
-
-function isLocalhostUrl(url: string): boolean {
-  return /^https?:\/\/(localhost|127\.0\.0\.1|0\.0\.0\.0|\[::1\])(:\d+)?$/i.test(url);
-}
-
 function resolveBackendUrl(): string | null {
-  const configured = import.meta.env.VITE_ML_BACKEND_URL?.replace(/\/$/, "");
-  if (!configured) return null;
-  // A localhost backend is never valid in a deployed build. Point deployed
-  // clients at the production HTTPS origin instead of the user's machine.
-  if (import.meta.env.PROD && isLocalhostUrl(configured)) {
-    return DEFAULT_PRODUCTION_URL;
-  }
-  return configured;
+  return import.meta.env.VITE_ML_BACKEND_URL?.replace(/\/$/, "") ?? null;
 }
 
 const ML_BACKEND_URL = resolveBackendUrl();
@@ -25,9 +12,9 @@ const ML_BACKEND_URL = resolveBackendUrl();
 const ALLOW_LOCAL_FALLBACK =
   !import.meta.env.PROD && import.meta.env.VITE_ALLOW_LOCAL_ANALYSIS_FALLBACK === "true";
 
-// Free-tier hosts (e.g. Render) sleep after inactivity; the first request can
-// take 50+ seconds to wake the instance and may return a 502/504. Give the
-// request a generous timeout and retry on transient errors until it wakes.
+// Cloud hosts can be slow to respond on the first request and may return a
+// transient 502/503/504 while cold. Give the request a generous timeout and
+// retry on transient errors before giving up.
 const REQUEST_TIMEOUT_MS = 120_000;
 const RETRY_DELAY_MS = 5_000;
 const MAX_ATTEMPTS = 4;
